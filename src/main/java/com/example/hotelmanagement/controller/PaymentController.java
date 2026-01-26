@@ -1,27 +1,39 @@
 package com.example.hotelmanagement.controller;
 
-import com.example.hotelmanagement.entity.*;
-import com.example.hotelmanagement.repository.*;
+import com.example.hotelmanagement.entity.Invoice;
+import com.example.hotelmanagement.entity.Payment;
+import com.example.hotelmanagement.exception.ResourceNotFoundException;
+import com.example.hotelmanagement.repository.InvoiceRepository;
+import com.example.hotelmanagement.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDate;
+
+import java.time.LocalDateTime; // <--- Quan trọng: Import LocalDateTime
 
 @RestController
-@RequestMapping("/api/v1/payments")
+@RequestMapping("/api/v1/invoices")
 public class PaymentController {
 
-    @Autowired private PaymentRepository paymentRepo;
-    @Autowired private InvoiceRepository invoiceRepo;
+    @Autowired
+    private PaymentRepository paymentRepository;
 
-    // API thực hiện thanh toán
-    @PostMapping
-    public Payment makePayment(@RequestParam Long invoiceId, 
-                               @RequestBody Payment payment) {
-        Invoice invoice = invoiceRepo.findById(invoiceId)
-             .orElseThrow(() -> new RuntimeException("Invoice not found"));
-             
+    @Autowired
+    private InvoiceRepository invoiceRepository;
+
+    // POST /api/v1/invoices/{id}/payments
+    @PostMapping("/{invoiceId}/payments")
+    public Payment processPayment(
+            @PathVariable Long invoiceId,
+            @RequestBody Payment payment) {
+        
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
+
         payment.setInvoice(invoice);
-        payment.setPaymentDate(LocalDate.now());
-        return paymentRepo.save(payment);
+        
+        // SỬA: Lưu thời gian thực (Ngày + Giờ)
+        payment.setPaymentDate(LocalDateTime.now()); 
+        
+        return paymentRepository.save(payment);
     }
 }
