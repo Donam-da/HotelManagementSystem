@@ -97,6 +97,12 @@ public class ReservationService {
         }
 
         res.setStatus("CHECKED_IN");
+        
+        // [FIX] Cập nhật trạng thái phòng thành OCCUPIED để báo cáo chạy đúng
+        Room room = res.getRoom();
+        room.setStatus("OCCUPIED");
+        roomRepository.save(room);
+        
         return reservationRepository.save(res);
     }
 
@@ -111,6 +117,12 @@ public class ReservationService {
 
         // 1. Cập nhật trạng thái
         res.setStatus("CHECKED_OUT");
+        
+        // [FIX] Trả phòng về trạng thái AVAILABLE
+        Room room = res.getRoom();
+        room.setStatus("AVAILABLE");
+        roomRepository.save(room);
+        
         Reservation savedRes = reservationRepository.save(res);
 
         // 2. QUAN TRỌNG: Tính toán lại hóa đơn lần cuối
