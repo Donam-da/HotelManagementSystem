@@ -52,4 +52,27 @@ public class RoomController {
             @RequestParam LocalDate checkOut) {
         return roomService.getAvailableRooms(checkIn, checkOut);
     }
+
+    @Autowired
+    private com.example.hotelmanagement.repository.RoomTypeRepository roomTypeRepository;
+    @Autowired
+    private com.example.hotelmanagement.repository.AmenityRepository amenityRepository;
+
+    // API phụ: Gán tiện nghi vào loại phòng (Ví dụ: Thêm Wifi vào phòng Deluxe)
+    // POST /api/v1/rooms/types/{typeId}/amenities/{amenityId}
+    @PostMapping("/types/{typeId}/amenities/{amenityId}")
+    public RoomType addAmenityToType(@PathVariable Long typeId, @PathVariable Long amenityId) {
+        RoomType type = roomTypeRepository.findById(typeId)
+                .orElseThrow(() -> new RuntimeException("Loại phòng không tồn tại"));
+        
+        com.example.hotelmanagement.entity.Amenity amenity = amenityRepository.findById(amenityId)
+                .orElseThrow(() -> new RuntimeException("Tiện nghi không tồn tại"));
+
+        // Kiểm tra xem đã có chưa để tránh trùng lặp
+        if (!type.getAmenities().contains(amenity)) {
+            type.getAmenities().add(amenity);
+            return roomTypeRepository.save(type);
+        }
+        return type;
+    }
 }
