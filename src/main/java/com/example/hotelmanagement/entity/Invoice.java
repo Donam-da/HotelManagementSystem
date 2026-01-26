@@ -19,4 +19,8 @@ public class Invoice {
     @OneToOne
     @JoinColumn(name = "reservation_id")
     private Reservation reservation;
+
+
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
+    private java.util.List<Payment> payments;
 }

@@ -20,4 +20,12 @@ public class RoomType {
     // Quan hệ 1-N: Một loại phòng có nhiều phòng vật lý
     @OneToMany(mappedBy = "roomType")
     private List<Room> rooms;
+    
+    @ManyToMany
+    @JoinTable(
+        name = "room_type_amenities",
+        joinColumns = @JoinColumn(name = "room_type_id"),
+        inverseJoinColumns = @JoinColumn(name = "amenity_id")
+    )
+    private List<Amenity> amenities;
 }
