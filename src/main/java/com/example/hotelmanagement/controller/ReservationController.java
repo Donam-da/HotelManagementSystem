@@ -7,6 +7,7 @@ import com.example.hotelmanagement.repository.ReservationRepository;
 import com.example.hotelmanagement.service.ReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate; // Import LocalDate
 
 @RestController
 @RequestMapping("/api/v1/reservations")
@@ -57,5 +58,14 @@ public class ReservationController {
     @GetMapping("/{id}/invoice")
     public Invoice getInvoice(@PathVariable Long id) {
         return reservationService.getInvoiceByReservationId(id);
+    }
+
+    // 7. Sửa ngày đặt (Modification)
+    @PutMapping("/{id}/dates")
+    public Reservation updateDates(
+            @PathVariable Long id,
+            @RequestParam LocalDate checkIn,
+            @RequestParam LocalDate checkOut) {
+        return reservationService.changeReservationDates(id, checkIn, checkOut);
     }
 }

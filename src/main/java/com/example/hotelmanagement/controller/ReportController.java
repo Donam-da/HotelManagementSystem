@@ -1,5 +1,6 @@
 package com.example.hotelmanagement.controller;
 
+import com.example.hotelmanagement.repository.GuestRepository;
 import com.example.hotelmanagement.repository.InvoiceRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class ReportController {
     @Autowired
     private RoomRepository roomRepository;
 
+    @Autowired
+    private GuestRepository guestRepository;
+
     // 1. Thống kê doanh thu (Revenue Analytics)
     @GetMapping("/revenue")
     public Map<String, Object> getRevenueReport() {
@@ -47,12 +51,27 @@ public class ReportController {
     public Map<String, Long> getOccupancyReport() {
         long totalRooms = roomRepository.count();
         
-        // Đếm số phòng đang có trạng thái 'OCCUPIED' (Nếu bạn có quản lý status)
-        // Hiện tại ta chỉ báo cáo tổng số phòng để demo
+        // Đếm số phòng đang có trạng thái 'OCCUPIED'
+        long occupiedRooms = roomRepository.findAll().stream()
+                .filter(room -> "OCCUPIED".equalsIgnoreCase(room.getStatus()))
+                .count();
         
         Map<String, Long> response = new HashMap<>();
         response.put("totalRooms", totalRooms);
-        // response.put("occupiedRooms", ...); // Phát triển sau
+        response.put("occupiedRooms", occupiedRooms);
+        response.put("availableRooms", totalRooms - occupiedRooms);
+        
+        return response;
+    }
+
+    // 3. Thống kê khách hàng (Guest Statistics)
+    @GetMapping("/guest-stats")
+    public Map<String, Object> getGuestStatistics() {
+        long totalGuests = guestRepository.count();
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("totalGuests", totalGuests);
+        // Mở rộng: Có thể thêm thống kê khách VIP (điểm > 100), khách mới trong tháng...
         
         return response;
     }

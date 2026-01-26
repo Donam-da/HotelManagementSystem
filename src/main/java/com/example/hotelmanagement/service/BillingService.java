@@ -1,9 +1,11 @@
 package com.example.hotelmanagement.service;
 
 import com.example.hotelmanagement.entity.Invoice;
+import com.example.hotelmanagement.entity.Payment;
 import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.entity.ServiceRequest;
 import com.example.hotelmanagement.repository.InvoiceRepository;
+import com.example.hotelmanagement.repository.PaymentRepository;
 import com.example.hotelmanagement.repository.ServiceRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,9 @@ public class BillingService {
 
     @Autowired
     private ServiceRequestRepository serviceRequestRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     // --- HÀM TÍNH HÓA ĐƠN (Cần cái này để hết lỗi generateInvoice) ---
     public Invoice generateInvoice(Reservation reservation) {
@@ -56,5 +61,32 @@ public class BillingService {
         invoice.setTotalAmount(total);
 
         return invoiceRepository.save(invoice);
+    }
+
+    // --- XỬ LÝ THANH TOÁN (Payment Processing) ---
+    public Payment processPayment(Long invoiceId, Payment payment) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại với ID: " + invoiceId));
+
+        payment.setInvoice(invoice);
+        if (payment.getPaymentDate() == null) {
+            payment.setPaymentDate(java.time.LocalDateTime.now());
+        }
+        return paymentRepository.save(payment);
+    }
+
+    // --- XỬ LÝ HOÀN TIỀN (Refunds) ---
+    public Payment processRefund(Long invoiceId, Double amount, String reason) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+
+        Payment refund = new Payment();
+        refund.setInvoice(invoice);
+        refund.setAmount(-amount); // Số tiền âm thể hiện hoàn tiền
+        refund.setPaymentMethod("REFUND");
+        refund.setPaymentDate(java.time.LocalDateTime.now());
+        // Có thể lưu lý do hoàn tiền vào một trường note nếu Entity Payment có hỗ trợ
+        
+        return paymentRepository.save(refund);
     }
 }
