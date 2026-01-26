@@ -1,11 +1,25 @@
 package com.example.hotelmanagement.repository;
+
 import com.example.hotelmanagement.entity.Room;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Long> {
-    // Tìm các phòng theo ID loại phòng
-    List<Room> findByRoomTypeId(Long roomTypeId);
+
+    // --- ĐÂY LÀ ĐOẠN CODE CÒN THIẾU GÂY RA LỖI ---
+    
+    // Tìm các phòng KHÔNG nằm trong danh sách đặt phòng (trùng ngày)
+    @Query("SELECT r FROM Room r WHERE r.id NOT IN (" +
+           "  SELECT res.room.id FROM Reservation res " +
+           "  WHERE res.status != 'CANCELLED' " +
+           "  AND ((res.checkInDate <= :checkOut) AND (res.checkOutDate >= :checkIn))" +
+           ")")
+    List<Room> findAvailableRooms(@Param("checkIn") LocalDate checkIn, 
+                                  @Param("checkOut") LocalDate checkOut);
 }
