@@ -17,6 +17,10 @@ public class Payment {
     private String paymentMethod;   // CASH, CREDIT_CARD
     private LocalDate paymentDate;
 
+    // --- BỔ SUNG CỘT MỚI (Theo yêu cầu 6.1) ---
+    private String transactionId;   // Mã giao dịch (Ví dụ: VCB-123456789)
+    // ------------------------------------------
+
     @ManyToOne
     @JoinColumn(name = "invoice_id")
     @JsonIgnore

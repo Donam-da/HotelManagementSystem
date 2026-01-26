@@ -14,8 +14,16 @@ public class Room {
     @Column(unique = true)
     private String roomNumber; // Ví dụ: 101, 202
 
-    private String status; // Available, Occupied (Có thể nâng cấp thành Enum sau)
-    private int floor;
+    private String status; // Available, Occupied, Maintenance
+    
+    private int floor; // Tầng
+
+    // --- CÁC CỘT MỚI BỔ SUNG (Theo yêu cầu mục 6.1) ---
+    @Column(name = "view_type")
+    private String viewType;     // Ví dụ: Sea View, City View, Garden View
+    
+    @Column(name = "is_smoking")
+    private Boolean isSmoking;   // true = Cho phép hút thuốc, false = Phòng cấm hút thuốc
 
     // Quan hệ N-1: Nhiều phòng thuộc về 1 Loại phòng
     @ManyToOne

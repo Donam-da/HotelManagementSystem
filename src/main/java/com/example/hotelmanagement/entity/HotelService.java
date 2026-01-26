@@ -11,7 +11,12 @@ public class HotelService {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;        // Ví dụ: Coca Cola, Massage
+    private String name;        // Ví dụ: Coca Cola, Massage, Giặt ủi
+    
     private Double price;       // Giá tiền
-    private Boolean isActive;   // Còn phục vụ hay không
+
+    // --- MỚI THÊM: Phân loại dịch vụ (Theo thiết kế 6.1) ---
+    private String category;    // Ví dụ: FOOD, BEVERAGE, SPA, LAUNDRY, TRANSPORT
+
+    private Boolean isActive;   // true = Còn phục vụ, false = Ngừng kinh doanh
 }
