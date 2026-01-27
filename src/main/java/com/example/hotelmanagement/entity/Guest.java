@@ -34,6 +34,9 @@ public class Guest {
     // Chỉ giữ lại 1 dòng này thôi:
     private Integer loyaltyPoints = 0; // Điểm thành viên (Mặc định là 0)
 
+    // --- BỔ SUNG CHO YÊU CẦU 7.2 (Soft Delete) ---
+    private boolean isDeleted = false; // false = Hoạt động, true = Đã xóa
+
     // --- QUAN HỆ ---
     @OneToMany(mappedBy = "guest", cascade = CascadeType.ALL)
     @JsonIgnore // Ngăn chặn lỗi vòng lặp vô hạn khi gọi API

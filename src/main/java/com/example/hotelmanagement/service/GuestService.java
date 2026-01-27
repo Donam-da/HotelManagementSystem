@@ -41,10 +41,13 @@ public class GuestService {
     }
 
     public void deleteGuest(Long id) {
-        if (!guestRepository.existsById(id)) {
-            throw new RuntimeException("Khách hàng không tồn tại");
-        }
-        guestRepository.deleteById(id);
+        Guest guest = guestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
+        
+        // THAY ĐỔI: Soft Delete (Yêu cầu 7.2)
+        // Thay vì xóa khỏi DB, ta chỉ đánh dấu là đã xóa
+        guest.setDeleted(true);
+        guestRepository.save(guest);
     }
 
     // --- BỔ SUNG THEO YÊU CẦU 4.2.1 (Search) ---
@@ -54,6 +57,7 @@ public class GuestService {
 
     // --- BỔ SUNG CHO CONTROLLER (Layered Architecture) ---
     public Page<Guest> getAllGuests(Pageable pageable) {
-        return guestRepository.findAll(pageable);
+        // Chỉ lấy những khách chưa bị xóa
+        return guestRepository.findByIsDeletedFalse(pageable);
     }
 }
