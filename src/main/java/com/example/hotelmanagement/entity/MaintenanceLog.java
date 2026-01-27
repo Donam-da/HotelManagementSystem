@@ -24,4 +24,9 @@ public class MaintenanceLog {
     private Double cost;             // Chi phí sửa chữa
     
     private String status;           // PENDING, IN_PROGRESS, COMPLETED
+
+    // --- BỔ SUNG LIÊN KẾT VỚI NHÂN VIÊN (Housekeeping Staff) ---
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    private User assignedStaff;      // Nhân viên thực hiện bảo trì
 }
