@@ -47,4 +47,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                                       @Param("checkIn") LocalDate checkIn, 
                                       @Param("checkOut") LocalDate checkOut,
                                       @Param("excludeReservationId") Long excludeReservationId);
+
+    // --- BỔ SUNG CHO REPORT SERVICE (Performance Optimization) ---
+    long countByStatus(String status);
 }

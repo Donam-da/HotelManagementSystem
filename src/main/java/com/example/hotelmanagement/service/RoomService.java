@@ -1,7 +1,9 @@
 package com.example.hotelmanagement.service;
 
+import com.example.hotelmanagement.entity.Amenity;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomType;
+import com.example.hotelmanagement.repository.AmenityRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
 import com.example.hotelmanagement.repository.RoomTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,9 @@ public class RoomService {
 
     @Autowired
     private RoomTypeRepository roomTypeRepository;
+
+    @Autowired
+    private AmenityRepository amenityRepository;
 
     // UC-002: Search Available Rooms (Nâng cao)
     public List<Room> searchRooms(LocalDate checkIn, LocalDate checkOut, Long typeId, Integer capacity) {
@@ -62,5 +67,32 @@ public class RoomService {
     // Tìm phòng trống cơ bản (chỉ theo ngày)
     public List<Room> getAvailableRooms(LocalDate checkIn, LocalDate checkOut) {
         return roomRepository.findAvailableRooms(checkIn, checkOut);
+    }
+
+    // --- QUẢN LÝ TIỆN NGHI (AMENITY) ---
+    public List<Amenity> getAllAmenities() { return amenityRepository.findAll(); }
+    public Amenity createAmenity(Amenity amenity) { return amenityRepository.save(amenity); }
+    public void deleteAmenity(Long id) { amenityRepository.deleteById(id); }
+    
+    public Amenity updateAmenity(Long id, Amenity details) {
+        Amenity amenity = amenityRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tiện nghi không tồn tại"));
+        amenity.setName(details.getName());
+        amenity.setDescription(details.getDescription());
+        amenity.setIcon(details.getIcon());
+        return amenityRepository.save(amenity);
+    }
+
+    public RoomType addAmenityToType(Long typeId, Long amenityId) {
+        RoomType type = roomTypeRepository.findById(typeId)
+                .orElseThrow(() -> new RuntimeException("Loại phòng không tồn tại"));
+        Amenity amenity = amenityRepository.findById(amenityId)
+                .orElseThrow(() -> new RuntimeException("Tiện nghi không tồn tại"));
+
+        if (!type.getAmenities().contains(amenity)) {
+            type.getAmenities().add(amenity);
+            return roomTypeRepository.save(type);
+        }
+        return type;
     }
 }

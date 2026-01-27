@@ -3,6 +3,7 @@ package com.example.hotelmanagement.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.Set;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Data
@@ -16,6 +17,7 @@ public class User {
     private String username;
 
     @Column(nullable = false)
+    @JsonIgnore // 5.1 & 5.3: Ẩn mật khẩu khi trả về API
     private String password;
 
     // --- BỔ SUNG ĐỊNH DANH CHO NHÂN VIÊN (STAFF) ---

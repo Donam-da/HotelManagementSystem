@@ -5,11 +5,14 @@ import com.example.hotelmanagement.entity.Invoice;
 import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
+import com.example.hotelmanagement.exception.BusinessException;
 import com.example.hotelmanagement.repository.GuestRepository;
 import com.example.hotelmanagement.repository.ReservationRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -34,10 +37,10 @@ public class ReservationService {
     public Reservation createReservation(Reservation reservation, Long guestId, Long roomId) {
         // A. Validate ngày tháng
         if (reservation.getCheckInDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("Ngày Check-in không được ở quá khứ!");
+            throw new BusinessException("Ngày Check-in không được ở quá khứ!");
         }
         if (reservation.getCheckOutDate().isBefore(reservation.getCheckInDate().plusDays(1))) {
-            throw new RuntimeException("Ngày Check-out phải sau ngày Check-in ít nhất 1 đêm!");
+            throw new BusinessException("Ngày Check-out phải sau ngày Check-in ít nhất 1 đêm!");
         }
 
         // B. Tìm Khách hàng & Phòng (Trả về 404 nếu không thấy)
@@ -50,7 +53,7 @@ public class ReservationService {
         // C. Kiểm tra phòng có trống không?
         boolean isAvailable = checkRoomAvailability(roomId, reservation.getCheckInDate(), reservation.getCheckOutDate());
         if (!isAvailable) {
-            throw new RuntimeException("Phòng " + room.getRoomNumber() + " đã bị đặt trong khoảng thời gian này!");
+            throw new BusinessException("Phòng " + room.getRoomNumber() + " đã bị đặt trong khoảng thời gian này!");
         }
 
         // D. Gán thông tin
@@ -82,7 +85,7 @@ public class ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
 
         if ("CANCELLED".equals(res.getStatus())) {
-            throw new RuntimeException("Đơn này đã hủy rồi!");
+            throw new BusinessException("Đơn này đã hủy rồi!");
         }
 
         // Logic phạt hủy muộn (Ví dụ đơn giản)
@@ -107,7 +110,7 @@ public class ReservationService {
         
         // Kiểm tra logic trạng thái
         if (!"CONFIRMED".equals(res.getStatus())) {
-             throw new RuntimeException("Chỉ đơn hàng đã xác nhận (CONFIRMED) mới được Check-in!");
+             throw new BusinessException("Chỉ đơn hàng đã xác nhận (CONFIRMED) mới được Check-in!");
         }
 
         res.setStatus("CHECKED_IN");
@@ -126,7 +129,7 @@ public class ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
 
         if (!"CHECKED_IN".equals(res.getStatus())) {
-            throw new RuntimeException("Lỗi: Khách chưa Check-in nên không thể Check-out!");
+            throw new BusinessException("Lỗi: Khách chưa Check-in nên không thể Check-out!");
         }
 
         // 1. Cập nhật trạng thái
@@ -176,7 +179,12 @@ public class ReservationService {
     
     // --- 7. LẤY TẤT CẢ ---
     public List<Reservation> getAllReservations() {
-        return reservationRepository.findAll();
+        return reservationRepository.findAllWithDetails(); // Sử dụng query tối ưu N+1
+    }
+
+    // --- 7b. LẤY TẤT CẢ CÓ PHÂN TRANG (Yêu cầu 5.2) ---
+    public Page<Reservation> getAllReservations(Pageable pageable) {
+        return reservationRepository.findAll(pageable);
     }
 
     // --- 8. SỬA ĐỔI ĐẶT PHÒNG (Modification) ---
@@ -186,20 +194,20 @@ public class ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
 
         if (!"CONFIRMED".equals(res.getStatus())) {
-            throw new RuntimeException("Chỉ có thể sửa đơn ở trạng thái CONFIRMED");
+            throw new BusinessException("Chỉ có thể sửa đơn ở trạng thái CONFIRMED");
         }
 
         // 1. Cập nhật ngày tháng (nếu có thay đổi)
         if (newCheckIn != null && newCheckOut != null) {
             // Validate logic ngày
-            if (newCheckIn.isBefore(LocalDate.now())) throw new RuntimeException("Ngày Check-in không hợp lệ");
-            if (newCheckOut.isBefore(newCheckIn.plusDays(1))) throw new RuntimeException("Ngày Check-out không hợp lệ");
+            if (newCheckIn.isBefore(LocalDate.now())) throw new BusinessException("Ngày Check-in không hợp lệ");
+            if (newCheckOut.isBefore(newCheckIn.plusDays(1))) throw new BusinessException("Ngày Check-out không hợp lệ");
 
             // Nếu KHÔNG đổi phòng (tức là giữ phòng cũ), phải kiểm tra xem ngày mới có bị trùng không
             if (newRoomId == null || newRoomId.equals(res.getRoom().getId())) {
                 long overlap = roomRepository.countOverlappingReservations(res.getRoom().getId(), newCheckIn, newCheckOut, reservationId);
                 if (overlap > 0) {
-                    throw new RuntimeException("Phòng hiện tại đã kín lịch trong khoảng thời gian mới chọn!");
+                    throw new BusinessException("Phòng hiện tại đã kín lịch trong khoảng thời gian mới chọn!");
                 }
             }
             res.setCheckInDate(newCheckIn);
@@ -214,7 +222,7 @@ public class ReservationService {
             // Kiểm tra xem phòng MỚI có trống không (dùng hàm countOverlappingReservations cho chính xác)
             long overlap = roomRepository.countOverlappingReservations(newRoomId, res.getCheckInDate(), res.getCheckOutDate(), reservationId);
             if (overlap > 0) {
-                throw new RuntimeException("Phòng " + newRoom.getRoomNumber() + " đã có người đặt trong thời gian này!");
+                throw new BusinessException("Phòng " + newRoom.getRoomNumber() + " đã có người đặt trong thời gian này!");
             }
             res.setRoom(newRoom);
         }
@@ -244,7 +252,7 @@ public class ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
 
         if (!"CONFIRMED".equals(res.getStatus())) {
-            throw new RuntimeException("Chỉ đơn CONFIRMED mới có thể đánh dấu No-Show");
+            throw new BusinessException("Chỉ đơn CONFIRMED mới có thể đánh dấu No-Show");
         }
 
         res.setStatus("NO_SHOW");
@@ -256,5 +264,11 @@ public class ReservationService {
         billingService.generateInvoice(savedRes);
         
         return savedRes;
+    }
+
+    // --- 10. LẤY CHI TIẾT (Hỗ trợ Controller tuân thủ Layered Architecture) ---
+    public Reservation getReservationById(Long id) {
+        return reservationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + id));
     }
 }

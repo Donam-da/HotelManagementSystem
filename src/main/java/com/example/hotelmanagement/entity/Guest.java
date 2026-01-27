@@ -7,7 +7,10 @@ import java.util.List;
 
 @Entity
 @Data
-@Table(name = "guests")
+@Table(name = "guests", indexes = {
+    @Index(name = "idx_guest_email", columnList = "email"),
+    @Index(name = "idx_guest_phone", columnList = "phone")
+})
 public class Guest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

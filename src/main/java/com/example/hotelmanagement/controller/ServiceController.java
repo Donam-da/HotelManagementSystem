@@ -1,30 +1,29 @@
 package com.example.hotelmanagement.controller;
 
 import com.example.hotelmanagement.entity.*;
-import com.example.hotelmanagement.repository.*;
+import com.example.hotelmanagement.service.BillingService;
+import com.example.hotelmanagement.service.HotelServiceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/services")
 public class ServiceController {
 
-    @Autowired private HotelServiceRepository serviceRepo;
-    @Autowired private ServiceRequestRepository requestRepo;
-    @Autowired private ReservationRepository reservationRepo;
+    @Autowired private HotelServiceService hotelServiceService;
+    @Autowired private BillingService billingService;
 
     // 1. Xem danh sách dịch vụ
     @GetMapping
     public List<HotelService> getAllServices() {
-        return serviceRepo.findAll();
+        return hotelServiceService.getAllServices();
     }
 
     // 2. Tạo dịch vụ mới (cho Admin)
     @PostMapping
     public HotelService createService(@RequestBody HotelService service) {
-        return serviceRepo.save(service);
+        return hotelServiceService.createService(service);
     }
 
     // 3. Khách gọi dịch vụ
@@ -32,20 +31,7 @@ public class ServiceController {
     public ServiceRequest requestService(@RequestParam Long reservationId, 
                                          @RequestParam Long serviceId, 
                                          @RequestParam Integer quantity) {
-        // Tìm đơn đặt phòng và dịch vụ
-        Reservation res = reservationRepo.findById(reservationId)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt phòng"));
-        HotelService srv = serviceRepo.findById(serviceId)
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy dịch vụ"));
-
-        // Tạo phiếu yêu cầu
-        ServiceRequest req = new ServiceRequest();
-        req.setReservation(res);
-        req.setHotelService(srv);
-        req.setQuantity(quantity);
-        req.setTotalCost(srv.getPrice() * quantity);
-        req.setRequestDate(LocalDateTime.now());
-
-        return requestRepo.save(req);
+        // Sử dụng BillingService để đảm bảo tính tiền vào hóa đơn (Fix lỗi DRY & Logic)
+        return billingService.addServiceRequest(reservationId, serviceId, quantity);
     }
 }

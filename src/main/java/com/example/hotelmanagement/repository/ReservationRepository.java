@@ -1,8 +1,21 @@
 package com.example.hotelmanagement.repository;
 import com.example.hotelmanagement.entity.Reservation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+    
+    // Giải quyết vấn đề N+1 Query bằng JOIN FETCH
+    @Query("SELECT r FROM Reservation r JOIN FETCH r.guest JOIN FETCH r.room JOIN FETCH r.room.roomType")
+    List<Reservation> findAllWithDetails();
+
+    // Hỗ trợ phân trang và tránh N+1 (Yêu cầu 5.2 & 5.3)
+    @EntityGraph(attributePaths = {"guest", "room", "room.roomType"})
+    Page<Reservation> findAll(Pageable pageable);
 }

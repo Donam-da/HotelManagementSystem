@@ -15,19 +15,19 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.hotelmanagement.entity.Guest;
-import com.example.hotelmanagement.repository.GuestRepository;
+import com.example.hotelmanagement.service.GuestService;
 
 @RestController
 @RequestMapping("/api/v1/guests")
 public class GuestController {
 
     @Autowired
-    private GuestRepository guestRepository; // Dùng tạm Repository cho nhanh
+    private GuestService guestService;
 
     // 1. Tạo khách mới
     @PostMapping
     public Guest createGuest(@RequestBody Guest guest) {
-        return guestRepository.save(guest);
+        return guestService.registerGuest(guest);
     }
 
     // 2. Lấy danh sách khách CÓ PHÂN TRANG (Sửa theo yêu cầu 7.2)
@@ -37,30 +37,24 @@ public class GuestController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return guestRepository.findAll(pageable);
+        return guestService.getAllGuests(pageable);
     }
 
     // 3. Lấy khách theo ID
     @GetMapping("/{id}")
     public Guest getGuestById(@PathVariable Long id) {
-        return guestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khách không tồn tại"));
+        return guestService.getGuestById(id);
     }
 
     // 4. Sửa thông tin khách
     @PutMapping("/{id}")
     public Guest updateGuest(@PathVariable Long id, @RequestBody Guest updateInfo) {
-        Guest guest = guestRepository.findById(id).orElseThrow();
-        guest.setFirstName(updateInfo.getFirstName());
-        guest.setLastName(updateInfo.getLastName());
-        guest.setEmail(updateInfo.getEmail());
-        guest.setPhone(updateInfo.getPhone());
-        return guestRepository.save(guest);
+        return guestService.updateGuestProfile(id, updateInfo);
     }
     
     // 5. Xóa khách (Soft delete - tạm thời dùng Hard delete cho đơn giản)
     @DeleteMapping("/{id}")
     public void deleteGuest(@PathVariable Long id) {
-        guestRepository.deleteById(id);
+        guestService.deleteGuest(id);
     }
 }

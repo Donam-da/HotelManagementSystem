@@ -4,6 +4,8 @@ import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.repository.GuestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @Service
@@ -48,5 +50,10 @@ public class GuestService {
     // --- BỔ SUNG THEO YÊU CẦU 4.2.1 (Search) ---
     public List<Guest> searchGuests(String keyword) {
         return guestRepository.searchGuests(keyword);
+    }
+
+    // --- BỔ SUNG CHO CONTROLLER (Layered Architecture) ---
+    public Page<Guest> getAllGuests(Pageable pageable) {
+        return guestRepository.findAll(pageable);
     }
 }

@@ -21,13 +21,13 @@ public class Reservation {
     private String status;
 
     // --- QUAN HỆ VỚI GUEST ---
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // Tối ưu Performance (5.3)
     @JoinColumn(name = "guest_id")
     @JsonIgnore
     private Guest guest;
 
     // --- QUAN HỆ VỚI ROOM (QUAN TRỌNG: Cần cái này để hết lỗi setRoom) ---
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // Tối ưu Performance (5.3)
     @JoinColumn(name = "room_id")
     private Room room;
     
