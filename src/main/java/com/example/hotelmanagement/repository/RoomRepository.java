@@ -22,4 +22,18 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
            ")")
     List<Room> findAvailableRooms(@Param("checkIn") LocalDate checkIn, 
                                   @Param("checkOut") LocalDate checkOut);
+
+    // --- BỔ SUNG CHO UC-002: TÌM KIẾM NÂNG CAO ---
+    @Query("SELECT r FROM Room r WHERE " +
+           "(:roomTypeId IS NULL OR r.roomType.id = :roomTypeId) AND " +
+           "(:capacity IS NULL OR r.roomType.maxOccupancy >= :capacity) AND " +
+           "r.id NOT IN (" +
+           "  SELECT res.room.id FROM Reservation res " +
+           "  WHERE res.status != 'CANCELLED' " +
+           "  AND ((res.checkInDate <= :checkOut) AND (res.checkOutDate >= :checkIn))" +
+           ")")
+    List<Room> searchAvailableRooms(@Param("checkIn") LocalDate checkIn, 
+                                    @Param("checkOut") LocalDate checkOut,
+                                    @Param("roomTypeId") Long roomTypeId,
+                                    @Param("capacity") Integer capacity);
 }

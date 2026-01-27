@@ -166,8 +166,8 @@ public class ReservationService {
     }
 
     // --- 8. SỬA ĐỔI ĐẶT PHÒNG (Modification) ---
-    // Lưu ý: Phương thức này cần public để Controller gọi được
-    public Reservation changeReservationDates(Long reservationId, LocalDate newCheckIn, LocalDate newCheckOut) {
+    // UC-004: Modify Reservation (Dates & Room)
+    public Reservation modifyReservation(Long reservationId, LocalDate newCheckIn, LocalDate newCheckOut, Long newRoomId, Long newGuestId) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
 
@@ -175,22 +175,40 @@ public class ReservationService {
             throw new RuntimeException("Chỉ có thể sửa đơn ở trạng thái CONFIRMED");
         }
 
-        if (newCheckIn == null || newCheckOut == null) {
-            throw new IllegalArgumentException("Ngày Check-in và Check-out không được để trống");
+        // 1. Cập nhật ngày tháng (nếu có thay đổi)
+        if (newCheckIn != null && newCheckOut != null) {
+            res.setCheckInDate(newCheckIn);
+            res.setCheckOutDate(newCheckOut);
         }
 
-        // Kiểm tra phòng trống cho ngày mới (trừ chính đơn này ra - logic phức tạp hơn chút, ở đây check đơn giản)
-        // boolean isAvailable = checkRoomAvailability(res.getRoom().getId(), newCheckIn, newCheckOut);
-        // Lưu ý: checkRoomAvailability hiện tại sẽ trả về false vì chính đơn này đang giữ phòng.
-        // Cần logic loại trừ đơn hiện tại trong query SQL, nhưng tạm thời ta chấp nhận check cơ bản:
-        // Nếu ngày mới khác ngày cũ, cần đảm bảo phòng trống.
-        
-        res.setCheckInDate(newCheckIn);
-        res.setCheckOutDate(newCheckOut);
+        // 2. Cập nhật phòng (nếu khách muốn đổi phòng khác)
+        if (newRoomId != null && !newRoomId.equals(res.getRoom().getId())) {
+            Room newRoom = roomRepository.findById(newRoomId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Phòng mới không tồn tại"));
+            
+            // Kiểm tra xem phòng mới có trống trong khoảng thời gian (mới hoặc cũ) không
+            boolean isAvailable = checkRoomAvailability(newRoomId, res.getCheckInDate(), res.getCheckOutDate());
+            if (!isAvailable) {
+                throw new RuntimeException("Phòng " + newRoom.getRoomNumber() + " đã có người đặt trong thời gian này!");
+            }
+            res.setRoom(newRoom);
+        }
+
+        // 3. Cập nhật khách hàng (nếu có thay đổi)
+        if (newGuestId != null && !newGuestId.equals(res.getGuest().getId())) {
+            Guest newGuest = guestRepository.findById(newGuestId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Khách hàng mới không tồn tại"));
+            res.setGuest(newGuest);
+        }
         
         // Cập nhật lại hóa đơn tạm tính
         billingService.generateInvoice(res);
         
         return reservationRepository.save(res);
+    }
+
+    // Phương thức cũ để tương thích với Controller (chỉ đổi ngày)
+    public Reservation changeReservationDates(Long reservationId, LocalDate newCheckIn, LocalDate newCheckOut) {
+        return modifyReservation(reservationId, newCheckIn, newCheckOut, null, null);
     }
 }

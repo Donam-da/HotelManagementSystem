@@ -1,15 +1,11 @@
 package com.example.hotelmanagement.service;
 
-import com.example.hotelmanagement.entity.Invoice;
-import com.example.hotelmanagement.entity.Payment;
-import com.example.hotelmanagement.entity.Reservation;
-import com.example.hotelmanagement.entity.ServiceRequest;
-import com.example.hotelmanagement.repository.InvoiceRepository;
-import com.example.hotelmanagement.repository.PaymentRepository;
-import com.example.hotelmanagement.repository.ServiceRequestRepository;
+import com.example.hotelmanagement.entity.*;
+import com.example.hotelmanagement.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -23,70 +19,97 @@ public class BillingService {
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
+    private HotelServiceRepository hotelServiceRepository;
+
+    @Autowired
+    private ReservationRepository reservationRepository;
+    
+    @Autowired
     private PaymentRepository paymentRepository;
 
-    // --- HÀM TÍNH HÓA ĐƠN (Cần cái này để hết lỗi generateInvoice) ---
+    // UC-009: Generate Invoice (Tính toán tổng tiền)
     public Invoice generateInvoice(Reservation reservation) {
-        // 1. Tính số đêm ở (Ít nhất 1 đêm)
-        long nights = ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
-        if (nights < 1) nights = 1;
-
-        // 2. Tiền phòng = Giá gốc * Số đêm
-        Double roomPrice = reservation.getRoom().getRoomType().getBasePrice();
-        Double roomCharge = roomPrice * nights;
-
-        // 3. Tiền dịch vụ (Ăn uống, giặt ủi...)
-        List<ServiceRequest> requests = serviceRequestRepository.findByReservationId(reservation.getId());
-        // Nếu danh sách rỗng thì tiền dịch vụ = 0
-        Double serviceCharge = 0.0;
-        if (requests != null) {
-            serviceCharge = requests.stream().mapToDouble(ServiceRequest::getTotalCost).sum();
-        }
-
-        // 4. Tính tổng và Thuế (10%)
-        Double subTotal = roomCharge + serviceCharge;
-        Double tax = subTotal * 0.10; // 10% VAT
-        Double total = subTotal + tax;
-
-        // 5. Lưu hoặc Cập nhật Hóa đơn
         Invoice invoice = reservation.getInvoice();
         if (invoice == null) {
             invoice = new Invoice();
             invoice.setReservation(reservation);
         }
 
-        // Gán các giá trị vào Invoice (Phải khớp với Entity Invoice bạn đã sửa)
-        invoice.setSubtotal(subTotal);
+        // 1. Tính tiền phòng
+        long days = ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
+        if (days < 1) days = 1; // Tối thiểu 1 ngày
+        
+        Double roomPrice = reservation.getRoom().getRoomType().getBasePrice();
+        Double roomTotal = days * roomPrice;
+
+        // 2. Tính tiền dịch vụ (Service Requests)
+        List<ServiceRequest> services = serviceRequestRepository.findByReservationId(reservation.getId());
+        Double serviceTotal = services.stream()
+                .mapToDouble(ServiceRequest::getTotalCost)
+                .sum();
+
+        // 3. Tổng hợp
+        Double subtotal = roomTotal + serviceTotal;
+        Double tax = subtotal * 0.1; // Thuế 10%
+        Double total = subtotal + tax;
+
+        invoice.setSubtotal(subtotal);
         invoice.setTaxAmount(tax);
         invoice.setTotalAmount(total);
 
         return invoiceRepository.save(invoice);
     }
 
-    // --- XỬ LÝ THANH TOÁN (Payment Processing) ---
-    public Payment processPayment(Long invoiceId, Payment payment) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại với ID: " + invoiceId));
+    // UC-008: Request Service (Gọi món/dịch vụ)
+    public ServiceRequest addServiceRequest(Long reservationId, Long serviceId, Integer quantity) {
+        Reservation res = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt phòng"));
+        
+        HotelService service = hotelServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Dịch vụ không tồn tại"));
 
+        ServiceRequest request = new ServiceRequest();
+        request.setReservation(res);
+        request.setHotelService(service);
+        request.setQuantity(quantity);
+        request.setTotalCost(service.getPrice() * quantity);
+        request.setRequestDate(LocalDateTime.now());
+
+        ServiceRequest savedRequest = serviceRequestRepository.save(request);
+
+        // Cập nhật lại hóa đơn ngay lập tức
+        generateInvoice(res);
+
+        return savedRequest;
+    }
+
+    // UC-010: Process Payment (Thanh toán)
+    public Payment processPayment(Long invoiceId, Payment paymentDetails) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+
+        Payment payment = new Payment();
+        payment.setAmount(paymentDetails.getAmount());
+        payment.setPaymentMethod(paymentDetails.getPaymentMethod());
+        payment.setTransactionId(paymentDetails.getTransactionId());
+        payment.setPaymentDate(LocalDateTime.now());
         payment.setInvoice(invoice);
-        if (payment.getPaymentDate() == null) {
-            payment.setPaymentDate(java.time.LocalDateTime.now());
-        }
+
         return paymentRepository.save(payment);
     }
 
-    // --- XỬ LÝ HOÀN TIỀN (Refunds) ---
+    // UC-010: Process Refund (Hoàn tiền)
     public Payment processRefund(Long invoiceId, Double amount, String reason) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
 
         Payment refund = new Payment();
-        refund.setInvoice(invoice);
-        refund.setAmount(-amount); // Số tiền âm thể hiện hoàn tiền
+        refund.setAmount(-amount); // Số tiền âm để thể hiện hoàn tiền
         refund.setPaymentMethod("REFUND");
-        refund.setPaymentDate(java.time.LocalDateTime.now());
-        // Có thể lưu lý do hoàn tiền vào một trường note nếu Entity Payment có hỗ trợ
-        
+        refund.setTransactionId(reason); // Lưu lý do hoặc mã giao dịch hoàn tiền
+        refund.setPaymentDate(LocalDateTime.now());
+        refund.setInvoice(invoice);
+
         return paymentRepository.save(refund);
     }
 }

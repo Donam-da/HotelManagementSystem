@@ -2,7 +2,6 @@ package com.example.hotelmanagement.service;
 
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomType;
-import com.example.hotelmanagement.exception.ResourceNotFoundException; // <-- Quan trọng: Import lỗi mới
 import com.example.hotelmanagement.repository.RoomRepository;
 import com.example.hotelmanagement.repository.RoomTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,27 +21,45 @@ public class RoomService {
     @Autowired
     private RoomTypeRepository roomTypeRepository;
 
-    // 1. Tạo loại phòng mới (Ví dụ: Deluxe, Standard)
-    public RoomType createRoomType(RoomType roomType) {
-        return roomTypeRepository.save(roomType);
+    // UC-002: Search Available Rooms (Nâng cao)
+    public List<Room> searchRooms(LocalDate checkIn, LocalDate checkOut, Long typeId, Integer capacity) {
+        if (checkIn == null || checkOut == null) {
+            throw new IllegalArgumentException("Ngày check-in và check-out là bắt buộc");
+        }
+        return roomRepository.searchAvailableRooms(checkIn, checkOut, typeId, capacity);
     }
 
-    // 2. Thêm phòng mới vào loại phòng (Đã nâng cấp xử lý lỗi)
-    public Room createRoom(Room room, Long roomTypeId) {
-        RoomType type = roomTypeRepository.findById(roomTypeId)
-                // SỬ DỤNG CUSTOM EXCEPTION ĐỂ TRẢ VỀ MÃ 404
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy loại phòng với ID: " + roomTypeId));
+    // UC-011: Manage Room Status (Cập nhật trạng thái thủ công)
+    public Room updateRoomStatus(Long roomId, String status) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Phòng không tồn tại"));
         
-        room.setRoomType(type);
+        // Các trạng thái hợp lệ: AVAILABLE, OCCUPIED, MAINTENANCE, DIRTY
+        room.setStatus(status);
         return roomRepository.save(room);
     }
+    
+    public List<Room> getAllRooms() {
+        return roomRepository.findAll();
+    }
 
-    // 3. Lấy danh sách phòng CÓ PHÂN TRANG (Đáp ứng yêu cầu Non-Functional 5.2)
+    // Hỗ trợ phân trang cho Controller
     public Page<Room> getAllRooms(Pageable pageable) {
         return roomRepository.findAll(pageable);
     }
 
-    // 4. Tìm phòng trống (Tính năng UC-002)
+    public RoomType createRoomType(RoomType roomType) {
+        return roomTypeRepository.save(roomType);
+    }
+
+    public Room createRoom(Room room, Long roomTypeId) {
+        RoomType roomType = roomTypeRepository.findById(roomTypeId)
+                .orElseThrow(() -> new RuntimeException("Loại phòng không tồn tại"));
+        room.setRoomType(roomType);
+        return roomRepository.save(room);
+    }
+
+    // Tìm phòng trống cơ bản (chỉ theo ngày)
     public List<Room> getAvailableRooms(LocalDate checkIn, LocalDate checkOut) {
         return roomRepository.findAvailableRooms(checkIn, checkOut);
     }
