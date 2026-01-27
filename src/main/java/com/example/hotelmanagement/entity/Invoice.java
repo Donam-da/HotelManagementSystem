@@ -24,6 +24,7 @@ public class Invoice {
     private Double subtotal;      // Tổng tiền trước thuế
     private Double serviceFee;    // Phí dịch vụ (5%) - BỔ SUNG THEO YÊU CẦU 4.2.4
     private Double taxAmount;     // Tiền thuế (10%)
+    private Double discountAmount = 0.0; // Giảm giá (Loyalty Points) - BR-103
     private Double totalAmount;   // Tổng cộng thanh toán (Sau thuế)
 
     // --- QUAN HỆ ---
@@ -43,9 +44,9 @@ public class Invoice {
     protected void onCreate() {
         if (this.invoiceNumber == null) {
             // Tạo mã kiểu: INV + Ngày tháng + 4 ký tự ngẫu nhiên
-            // Kết quả: INV-20260126-A1B2
+            // BR-303: Format INV-YYYYMMDD-XXXXX (5 ký tự random)
             String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-            String randomPart = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+            String randomPart = UUID.randomUUID().toString().substring(0, 5).toUpperCase();
             this.invoiceNumber = "INV-" + datePart + "-" + randomPart;
         }
     }

@@ -5,6 +5,7 @@ import lombok.Data;
 import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Data
@@ -20,6 +21,9 @@ public class Reservation {
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private String status;
+    
+    // --- BỔ SUNG ĐỂ LƯU PHÍ PHẠT HỦY (BR-005, BR-006) ---
+    private Double cancellationFee = 0.0;
 
     // --- QUAN HỆ VỚI GUEST ---
     @ManyToOne(fetch = FetchType.LAZY) // Tối ưu Performance (5.3)
@@ -44,7 +48,10 @@ public class Reservation {
     @PrePersist
     protected void onCreate() {
         if (this.confirmationNumber == null) {
-            this.confirmationNumber = "RES-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            // BR-008: Format HTLYYYYMMDD-XXXXX
+            String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String randomPart = java.util.UUID.randomUUID().toString().substring(0, 5).toUpperCase();
+            this.confirmationNumber = "HTL" + datePart + "-" + randomPart;
         }
     }
 }

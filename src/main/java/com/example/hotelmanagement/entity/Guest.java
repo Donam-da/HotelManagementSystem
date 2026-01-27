@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
+import java.time.LocalDate;
 
 @Entity
 @Data
@@ -23,6 +24,9 @@ public class Guest {
     private String email;
 
     private String phone;
+
+    // --- BỔ SUNG THEO YÊU CẦU 8.2 (BR-101) ---
+    private LocalDate dateOfBirth;
 
     // --- CÁC TRƯỜNG BỔ SUNG THEO YÊU CẦU 6.1 ---
     private String address;      // Địa chỉ

@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -42,11 +43,24 @@ public class ReservationService {
         if (reservation.getCheckOutDate().isBefore(reservation.getCheckInDate().plusDays(1))) {
             throw new BusinessException("Ngày Check-out phải sau ngày Check-in ít nhất 1 đêm!");
         }
+        
+        // BR-002: Maximum duration is 30 nights
+        if (ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate()) > 30) {
+            throw new BusinessException("Thời gian đặt phòng tối đa là 30 đêm liên tiếp!");
+        }
 
         // B. Tìm Khách hàng & Phòng (Trả về 404 nếu không thấy)
         Guest guest = guestRepository.findById(guestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + guestId));
         
+        // BR-101: Guest must be at least 18 years old
+        if (guest.getDateOfBirth() != null) {
+            long age = ChronoUnit.YEARS.between(guest.getDateOfBirth(), LocalDate.now());
+            if (age < 18) {
+                throw new BusinessException("Khách hàng phải từ 18 tuổi trở lên để đặt phòng!");
+            }
+        }
+
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
 
@@ -88,12 +102,25 @@ public class ReservationService {
             throw new BusinessException("Đơn này đã hủy rồi!");
         }
 
-        // Logic phạt hủy muộn (Ví dụ đơn giản)
-        long daysUntilCheckIn = ChronoUnit.DAYS.between(LocalDate.now(), res.getCheckInDate());
-        if (daysUntilCheckIn < 1) {
-            System.out.println("LOG: Khách hủy sát ngày, có thể tính phí phạt tại đây.");
-        }
+        // BR-005, BR-006, BR-007: Tính phí phạt hủy
+        // Giả sử giờ check-in tiêu chuẩn là 14:00
+        LocalDateTime checkInTime = res.getCheckInDate().atTime(14, 0);
+        LocalDateTime now = LocalDateTime.now();
+        long hoursUntilCheckIn = ChronoUnit.HOURS.between(now, checkInTime);
+        
+        Double oneNightPrice = res.getRoom().getRoomType().getBasePrice();
+        Double fee = 0.0;
 
+        if (hoursUntilCheckIn < 24) {
+            // BR-005: < 24h -> Phạt 1 đêm
+            fee = oneNightPrice;
+        } else if (hoursUntilCheckIn < 72) {
+            // BR-006: 24h-72h -> Phạt 50% đêm đầu
+            fee = oneNightPrice * 0.5;
+        }
+        // BR-007: > 72h -> Miễn phí (fee = 0.0)
+
+        res.setCancellationFee(fee);
         res.setStatus("CANCELLED");
         Reservation savedRes = reservationRepository.save(res);
         
@@ -146,11 +173,11 @@ public class ReservationService {
         // (Để cập nhật tổng tiền bao gồm các dịch vụ gọi thêm trong lúc ở)
         Invoice finalInvoice = billingService.generateInvoice(savedRes);
 
-        // 3. TÍCH ĐIỂM THÀNH VIÊN (LOYALTY PROGRAM)
-        // Logic: 100,000 VNĐ = 1 điểm
+        // 3. TÍCH ĐIỂM THÀNH VIÊN (LOYALTY PROGRAM - BR-103)
+        // Rule: 10 points per $1 spent (Giả sử đơn vị tiền tệ là tương đương $)
         if (finalInvoice.getTotalAmount() != null) {
             Guest guest = savedRes.getGuest();
-            int pointsEarned = (int) (finalInvoice.getTotalAmount() / 100000);
+            int pointsEarned = (int) (finalInvoice.getTotalAmount() * 10);
             guest.setLoyaltyPoints(guest.getLoyaltyPoints() + pointsEarned);
             guestRepository.save(guest);
         }
@@ -193,8 +220,9 @@ public class ReservationService {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
 
-        if (!"CONFIRMED".equals(res.getStatus())) {
-            throw new BusinessException("Chỉ có thể sửa đơn ở trạng thái CONFIRMED");
+        // BR-004: Allow modification if PENDING or CONFIRMED
+        if (!"PENDING".equals(res.getStatus()) && !"CONFIRMED".equals(res.getStatus())) {
+            throw new BusinessException("Chỉ có thể sửa đơn ở trạng thái PENDING hoặc CONFIRMED");
         }
 
         // 1. Cập nhật ngày tháng (nếu có thay đổi)
@@ -202,6 +230,11 @@ public class ReservationService {
             // Validate logic ngày
             if (newCheckIn.isBefore(LocalDate.now())) throw new BusinessException("Ngày Check-in không hợp lệ");
             if (newCheckOut.isBefore(newCheckIn.plusDays(1))) throw new BusinessException("Ngày Check-out không hợp lệ");
+            
+            // BR-002: Check max duration
+            if (ChronoUnit.DAYS.between(newCheckIn, newCheckOut) > 30) {
+                throw new BusinessException("Thời gian đặt phòng tối đa là 30 đêm liên tiếp!");
+            }
 
             // Nếu KHÔNG đổi phòng (tức là giữ phòng cũ), phải kiểm tra xem ngày mới có bị trùng không
             if (newRoomId == null || newRoomId.equals(res.getRoom().getId())) {

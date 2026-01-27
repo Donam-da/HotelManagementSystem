@@ -27,6 +27,9 @@ public class BillingService {
     @Autowired
     private PaymentRepository paymentRepository;
 
+    @Autowired
+    private GuestRepository guestRepository;
+
     // UC-009: Generate Invoice (Tính toán tổng tiền)
     public Invoice generateInvoice(Reservation reservation) {
         Invoice invoice = reservation.getInvoice();
@@ -40,8 +43,10 @@ public class BillingService {
         Double basePrice = reservation.getRoom().getRoomType().getBasePrice();
 
         // LOGIC MỚI: Nếu Hủy hoặc No-Show -> Phạt 1 đêm tiền phòng
-        if ("CANCELLED".equals(reservation.getStatus()) || "NO_SHOW".equals(reservation.getStatus())) {
+        if ("NO_SHOW".equals(reservation.getStatus())) {
             roomTotal = basePrice; 
+        } else if ("CANCELLED".equals(reservation.getStatus())) {
+            roomTotal = reservation.getCancellationFee(); // Sử dụng phí phạt đã tính ở ReservationService
         } else {
             // Tính bình thường theo số đêm thực tế
             long days = ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
@@ -58,13 +63,19 @@ public class BillingService {
         // 3. Tổng hợp
         Double subtotal = roomTotal + serviceTotal;
         
-        Double serviceFee = subtotal * 0.05; // Phí dịch vụ 5% (Theo yêu cầu 4.2.4)
+        // BR-302: Service charge 5% applied to ROOM CHARGES ONLY
+        Double serviceFee = roomTotal * 0.05; 
         Double tax = (subtotal + serviceFee) * 0.1; // Thuế 10% (Tính trên cả phí dịch vụ)
-        Double total = subtotal + serviceFee + tax;
+        
+        // BR-103: Trừ tiền giảm giá (nếu có)
+        Double discount = invoice.getDiscountAmount() != null ? invoice.getDiscountAmount() : 0.0;
+        Double total = subtotal + serviceFee + tax - discount;
+        if (total < 0) total = 0.0;
 
         invoice.setSubtotal(subtotal);
         invoice.setServiceFee(serviceFee);
         invoice.setTaxAmount(tax);
+        invoice.setDiscountAmount(discount);
         invoice.setTotalAmount(total);
 
         return invoiceRepository.save(invoice);
@@ -122,5 +133,28 @@ public class BillingService {
         refund.setInvoice(invoice);
 
         return paymentRepository.save(refund);
+    }
+
+    // BR-103: Đổi điểm thưởng lấy giảm giá (100 điểm = $1)
+    public Invoice redeemLoyaltyPoints(Long invoiceId, Integer pointsToRedeem) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+        
+        Reservation res = invoice.getReservation();
+        Guest guest = res.getGuest();
+        
+        if (guest.getLoyaltyPoints() < pointsToRedeem) {
+            throw new RuntimeException("Điểm tích lũy không đủ!");
+        }
+        
+        // Quy đổi: 100 điểm = 1 đơn vị tiền tệ
+        Double discountValue = pointsToRedeem / 100.0;
+        
+        // Cập nhật điểm và hóa đơn
+        guest.setLoyaltyPoints(guest.getLoyaltyPoints() - pointsToRedeem);
+        guestRepository.save(guest);
+
+        invoice.setDiscountAmount((invoice.getDiscountAmount() != null ? invoice.getDiscountAmount() : 0.0) + discountValue);
+        return generateInvoice(res); // Tính toán lại tổng tiền
     }
 }

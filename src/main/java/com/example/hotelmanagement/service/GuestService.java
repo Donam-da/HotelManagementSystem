@@ -1,6 +1,7 @@
 package com.example.hotelmanagement.service;
 
 import com.example.hotelmanagement.entity.Guest;
+import com.example.hotelmanagement.exception.BusinessException;
 import com.example.hotelmanagement.repository.GuestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,10 @@ public class GuestService {
 
     // UC-001: Register Guest
     public Guest registerGuest(Guest guest) {
-        // Có thể thêm validate email trùng lặp tại đây
+        // BR-102: Email address must be unique
+        if (guestRepository.existsByEmail(guest.getEmail())) {
+            throw new BusinessException("Email này đã được sử dụng trong hệ thống!");
+        }
         return guestRepository.save(guest);
     }
 
@@ -24,6 +28,14 @@ public class GuestService {
         Guest guest = guestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
         
+        // BR-102: Check email uniqueness if changed
+        if (guestDetails.getEmail() != null && !guestDetails.getEmail().equals(guest.getEmail())) {
+             if (guestRepository.existsByEmail(guestDetails.getEmail())) {
+                 throw new BusinessException("Email này đã được sử dụng!");
+             }
+             guest.setEmail(guestDetails.getEmail());
+        }
+
         guest.setFirstName(guestDetails.getFirstName());
         guest.setLastName(guestDetails.getLastName());
         guest.setPhone(guestDetails.getPhone());
