@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.List;
 
 @Entity
 @Data
@@ -34,6 +35,10 @@ public class Reservation {
     // --- QUAN HỆ VỚI INVOICE ---
     @OneToOne(mappedBy = "reservation", cascade = CascadeType.ALL)
     private Invoice invoice;
+
+    // --- BỔ SUNG THEO YÊU CẦU 6.1 (Quan hệ với ReservationRoom) ---
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
+    private List<ReservationRoom> reservationRooms; // Danh sách phòng trong đơn đặt
 
     // Tự động sinh mã khi tạo mới
     @PrePersist

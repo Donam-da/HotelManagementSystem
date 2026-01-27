@@ -13,6 +13,9 @@ public class HotelService {
 
     private String name;        // Ví dụ: Coca Cola, Massage, Giặt ủi
     
+    // --- BỔ SUNG THEO YÊU CẦU 6.1 ---
+    private String description; // Mô tả dịch vụ
+
     private Double price;       // Giá tiền
 
     // --- MỚI THÊM: Phân loại dịch vụ (Theo thiết kế 6.1) ---

@@ -23,6 +23,9 @@ public class ServiceRequest {
     private Integer quantity; // Số lượng
     private Double totalCost; // Tổng tiền = giá * số lượng
     private LocalDateTime requestDate;
+    
+    // --- BỔ SUNG THEO YÊU CẦU 6.1 ---
+    private LocalDateTime completedAt; // Thời điểm hoàn thành dịch vụ
 
     // --- BỔ SUNG THEO YÊU CẦU 4.2.4 (Track status) ---
     private String status = "PENDING";    // Mặc định là PENDING khi tạo mới
