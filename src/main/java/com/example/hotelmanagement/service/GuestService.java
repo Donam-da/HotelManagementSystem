@@ -4,6 +4,7 @@ import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.repository.GuestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 public class GuestService {
@@ -26,7 +27,26 @@ public class GuestService {
         guest.setPhone(guestDetails.getPhone());
         guest.setAddress(guestDetails.getAddress());
         guest.setIdNumber(guestDetails.getIdNumber());
+        guest.setPreferences(guestDetails.getPreferences()); // Cập nhật sở thích
         
         return guestRepository.save(guest);
+    }
+
+    // --- BỔ SUNG THEO YÊU CẦU 4.2.1 (Read & Delete) ---
+    public Guest getGuestById(Long id) {
+        return guestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
+    }
+
+    public void deleteGuest(Long id) {
+        if (!guestRepository.existsById(id)) {
+            throw new RuntimeException("Khách hàng không tồn tại");
+        }
+        guestRepository.deleteById(id);
+    }
+
+    // --- BỔ SUNG THEO YÊU CẦU 4.2.1 (Search) ---
+    public List<Guest> searchGuests(String keyword) {
+        return guestRepository.searchGuests(keyword);
     }
 }

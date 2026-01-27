@@ -25,6 +25,9 @@ public class Guest {
     private String address;      // Địa chỉ
     private String idNumber;     // Số CCCD / Hộ chiếu
     
+    // --- BỔ SUNG THEO YÊU CẦU 4.2.1 (Track preferences) ---
+    private String preferences;  // Sở thích: Tầng cao, yên tĩnh, dị ứng...
+
     // Chỉ giữ lại 1 dòng này thôi:
     private Integer loyaltyPoints = 0; // Điểm thành viên (Mặc định là 0)
 

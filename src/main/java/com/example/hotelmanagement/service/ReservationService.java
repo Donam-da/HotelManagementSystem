@@ -56,7 +56,8 @@ public class ReservationService {
         // D. Gán thông tin
         reservation.setGuest(guest);
         reservation.setRoom(room);
-        reservation.setStatus("CONFIRMED");
+        // THAY ĐỔI: Mặc định là PENDING (Chờ xử lý) theo yêu cầu 4.2.3
+        reservation.setStatus("PENDING");
 
         // E. Lưu đơn đặt
         Reservation savedReservation = reservationRepository.save(reservation);
@@ -65,6 +66,14 @@ public class ReservationService {
         billingService.generateInvoice(savedReservation);
 
         return savedReservation;
+    }
+
+    // --- BỔ SUNG: XÁC NHẬN ĐẶT PHÒNG (Pending -> Confirmed) ---
+    public Reservation confirmReservation(Long reservationId) {
+        Reservation res = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
+        res.setStatus("CONFIRMED");
+        return reservationRepository.save(res);
     }
 
     // --- 2. HỦY ĐẶT PHÒNG (PATCH cancel) ---
@@ -83,7 +92,12 @@ public class ReservationService {
         }
 
         res.setStatus("CANCELLED");
-        return reservationRepository.save(res);
+        Reservation savedRes = reservationRepository.save(res);
+        
+        // Cập nhật hóa đơn để tính phí phạt hủy (nếu có)
+        billingService.generateInvoice(savedRes);
+        
+        return savedRes;
     }
 
     // --- 3. CHECK-IN (PATCH check-in) ---
@@ -92,8 +106,8 @@ public class ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
         
         // Kiểm tra logic trạng thái
-        if ("CANCELLED".equals(res.getStatus())) {
-             throw new RuntimeException("Không thể Check-in đơn đã hủy!");
+        if (!"CONFIRMED".equals(res.getStatus())) {
+             throw new RuntimeException("Chỉ đơn hàng đã xác nhận (CONFIRMED) mới được Check-in!");
         }
 
         res.setStatus("CHECKED_IN");
@@ -177,6 +191,17 @@ public class ReservationService {
 
         // 1. Cập nhật ngày tháng (nếu có thay đổi)
         if (newCheckIn != null && newCheckOut != null) {
+            // Validate logic ngày
+            if (newCheckIn.isBefore(LocalDate.now())) throw new RuntimeException("Ngày Check-in không hợp lệ");
+            if (newCheckOut.isBefore(newCheckIn.plusDays(1))) throw new RuntimeException("Ngày Check-out không hợp lệ");
+
+            // Nếu KHÔNG đổi phòng (tức là giữ phòng cũ), phải kiểm tra xem ngày mới có bị trùng không
+            if (newRoomId == null || newRoomId.equals(res.getRoom().getId())) {
+                long overlap = roomRepository.countOverlappingReservations(res.getRoom().getId(), newCheckIn, newCheckOut, reservationId);
+                if (overlap > 0) {
+                    throw new RuntimeException("Phòng hiện tại đã kín lịch trong khoảng thời gian mới chọn!");
+                }
+            }
             res.setCheckInDate(newCheckIn);
             res.setCheckOutDate(newCheckOut);
         }
@@ -186,9 +211,9 @@ public class ReservationService {
             Room newRoom = roomRepository.findById(newRoomId)
                     .orElseThrow(() -> new ResourceNotFoundException("Phòng mới không tồn tại"));
             
-            // Kiểm tra xem phòng mới có trống trong khoảng thời gian (mới hoặc cũ) không
-            boolean isAvailable = checkRoomAvailability(newRoomId, res.getCheckInDate(), res.getCheckOutDate());
-            if (!isAvailable) {
+            // Kiểm tra xem phòng MỚI có trống không (dùng hàm countOverlappingReservations cho chính xác)
+            long overlap = roomRepository.countOverlappingReservations(newRoomId, res.getCheckInDate(), res.getCheckOutDate(), reservationId);
+            if (overlap > 0) {
                 throw new RuntimeException("Phòng " + newRoom.getRoomNumber() + " đã có người đặt trong thời gian này!");
             }
             res.setRoom(newRoom);
@@ -210,5 +235,26 @@ public class ReservationService {
     // Phương thức cũ để tương thích với Controller (chỉ đổi ngày)
     public Reservation changeReservationDates(Long reservationId, LocalDate newCheckIn, LocalDate newCheckOut) {
         return modifyReservation(reservationId, newCheckIn, newCheckOut, null, null);
+    }
+
+    // --- 9. XỬ LÝ NO-SHOW (Khách không đến) ---
+    // UC-005 / 4.2.3: Manage reservation statuses (No-Show)
+    public Reservation markAsNoShow(Long reservationId) {
+        Reservation res = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
+
+        if (!"CONFIRMED".equals(res.getStatus())) {
+            throw new RuntimeException("Chỉ đơn CONFIRMED mới có thể đánh dấu No-Show");
+        }
+
+        res.setStatus("NO_SHOW");
+        // Có thể thêm logic tính phí phạt 100% đêm đầu tiên tại đây nếu cần
+        
+        Reservation savedRes = reservationRepository.save(res);
+        
+        // Cập nhật hóa đơn để tính phí phạt No-Show
+        billingService.generateInvoice(savedRes);
+        
+        return savedRes;
     }
 }

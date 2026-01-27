@@ -22,6 +22,7 @@ public class Invoice {
     private String invoiceNumber; // Mã hóa đơn (Ví dụ: INV-2026-001)
 
     private Double subtotal;      // Tổng tiền trước thuế
+    private Double serviceFee;    // Phí dịch vụ (5%) - BỔ SUNG THEO YÊU CẦU 4.2.4
     private Double taxAmount;     // Tiền thuế (10%)
     private Double totalAmount;   // Tổng cộng thanh toán (Sau thuế)
 

@@ -36,11 +36,18 @@ public class BillingService {
         }
 
         // 1. Tính tiền phòng
-        long days = ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
-        if (days < 1) days = 1; // Tối thiểu 1 ngày
-        
-        Double roomPrice = reservation.getRoom().getRoomType().getBasePrice();
-        Double roomTotal = days * roomPrice;
+        Double roomTotal = 0.0;
+        Double basePrice = reservation.getRoom().getRoomType().getBasePrice();
+
+        // LOGIC MỚI: Nếu Hủy hoặc No-Show -> Phạt 1 đêm tiền phòng
+        if ("CANCELLED".equals(reservation.getStatus()) || "NO_SHOW".equals(reservation.getStatus())) {
+            roomTotal = basePrice; 
+        } else {
+            // Tính bình thường theo số đêm thực tế
+            long days = ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
+            if (days < 1) days = 1;
+            roomTotal = days * basePrice;
+        }
 
         // 2. Tính tiền dịch vụ (Service Requests)
         List<ServiceRequest> services = serviceRequestRepository.findByReservationId(reservation.getId());
@@ -50,10 +57,13 @@ public class BillingService {
 
         // 3. Tổng hợp
         Double subtotal = roomTotal + serviceTotal;
-        Double tax = subtotal * 0.1; // Thuế 10%
-        Double total = subtotal + tax;
+        
+        Double serviceFee = subtotal * 0.05; // Phí dịch vụ 5% (Theo yêu cầu 4.2.4)
+        Double tax = (subtotal + serviceFee) * 0.1; // Thuế 10% (Tính trên cả phí dịch vụ)
+        Double total = subtotal + serviceFee + tax;
 
         invoice.setSubtotal(subtotal);
+        invoice.setServiceFee(serviceFee);
         invoice.setTaxAmount(tax);
         invoice.setTotalAmount(total);
 
@@ -74,6 +84,7 @@ public class BillingService {
         request.setQuantity(quantity);
         request.setTotalCost(service.getPrice() * quantity);
         request.setRequestDate(LocalDateTime.now());
+        // request.setStatus("PENDING"); // Đã được set mặc định trong Entity, không cần gọi ở đây nữa
 
         ServiceRequest savedRequest = serviceRequestRepository.save(request);
 
