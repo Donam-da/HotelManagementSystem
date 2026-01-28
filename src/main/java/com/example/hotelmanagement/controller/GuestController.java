@@ -7,12 +7,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import java.net.URI;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/guests")
+@RequestMapping("/api/v1/guests")
 public class GuestController {
 
     private final GuestService guestService;
@@ -24,7 +26,14 @@ public class GuestController {
     @PostMapping
     public ResponseEntity<GuestDTO> registerGuest(@RequestBody Guest guest) {
         Guest savedGuest = guestService.registerGuest(guest);
-        return ResponseEntity.ok(guestService.convertToDTO(savedGuest));
+        GuestDTO dto = guestService.convertToDTO(savedGuest);
+        
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(dto.getId())
+                .toUri();
+                
+        return ResponseEntity.created(location).body(dto);
     }
 
     @GetMapping

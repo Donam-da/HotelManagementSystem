@@ -7,9 +7,12 @@ import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.service.ReservationService;
 import com.example.hotelmanagement.service.BillingService;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import java.net.URI;
 import java.time.LocalDate; // Import LocalDate
 
 @RestController
@@ -50,11 +53,19 @@ public class ReservationController {
 
     // 1. Tạo đơn đặt phòng (POST)
     @PostMapping
-    public ReservationDTO createReservation(
+    public ResponseEntity<ReservationDTO> createReservation(
             @RequestBody Reservation reservation,
             @RequestParam Long guestId,
             @RequestParam Long roomId) {
-        return convertToDTO(reservationService.createReservation(reservation, guestId, roomId));
+        Reservation savedReservation = reservationService.createReservation(reservation, guestId, roomId);
+        ReservationDTO dto = convertToDTO(savedReservation);
+        
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(dto.getId())
+                .toUri();
+        
+        return ResponseEntity.created(location).body(dto);
     }
 
     // 2. Lấy chi tiết đơn (GET /api/v1/reservations/{id})
