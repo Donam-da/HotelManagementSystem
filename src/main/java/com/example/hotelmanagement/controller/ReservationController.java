@@ -1,13 +1,13 @@
 package com.example.hotelmanagement.controller;
 
 import com.example.hotelmanagement.dto.ReservationDTO;
+import com.example.hotelmanagement.dto.ReservationRequestDTO;
 import com.example.hotelmanagement.dto.InvoiceDTO;
 import com.example.hotelmanagement.entity.Invoice;
 import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.service.ReservationService;
 import com.example.hotelmanagement.service.BillingService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -45,10 +45,12 @@ public class ReservationController {
     })
     @PostMapping
     public ResponseEntity<ReservationDTO> createReservation(
-            @Valid @RequestBody Reservation reservation,
-            @Parameter(description = "ID của khách hàng") @RequestParam Long guestId,
-            @Parameter(description = "ID của phòng") @RequestParam Long roomId) {
-        Reservation savedReservation = reservationService.createReservation(reservation, guestId, roomId);
+            @Valid @RequestBody ReservationRequestDTO request) {
+        Reservation reservation = new Reservation();
+        reservation.setCheckInDate(request.getCheckInDate());
+        reservation.setCheckOutDate(request.getCheckOutDate());
+        
+        Reservation savedReservation = reservationService.createReservation(reservation, request.getGuestId(), request.getRoomId());
         ReservationDTO dto = reservationService.convertToDTO(savedReservation);
         
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()

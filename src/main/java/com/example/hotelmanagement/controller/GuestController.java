@@ -34,7 +34,8 @@ public class GuestController {
         @ApiResponse(responseCode = "201", description = "Khách hàng đã được tạo thành công"),
         @ApiResponse(responseCode = "400", description = "Dữ liệu đầu vào không hợp lệ")
     })
-    public ResponseEntity<GuestDTO> registerGuest(@Valid @RequestBody Guest guest) {
+    public ResponseEntity<GuestDTO> registerGuest(@Valid @RequestBody GuestDTO guestDto) {
+        Guest guest = guestService.convertToEntity(guestDto);
         Guest savedGuest = guestService.registerGuest(guest);
         GuestDTO dto = guestService.convertToDTO(savedGuest);
         
@@ -63,8 +64,8 @@ public class GuestController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Cập nhật thông tin khách hàng")
-    public ResponseEntity<GuestDTO> updateGuest(@PathVariable Long id, @RequestBody Guest guestDetails) {
-        Guest updatedGuest = guestService.updateGuestProfile(id, guestDetails);
+    public ResponseEntity<GuestDTO> updateGuest(@PathVariable Long id, @RequestBody GuestDTO guestDto) {
+        Guest updatedGuest = guestService.updateGuestProfile(id, guestService.convertToEntity(guestDto));
         return ResponseEntity.ok(guestService.convertToDTO(updatedGuest));
     }
 

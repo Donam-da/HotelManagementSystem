@@ -96,4 +96,17 @@ public class GuestService {
         dto.setLoyaltyPoints(guest.getLoyaltyPoints());
         return dto;
     }
+
+    public Guest convertToEntity(GuestDTO dto) {
+        Guest guest = new Guest();
+        guest.setFirstName(dto.getFirstName());
+        guest.setLastName(dto.getLastName());
+        guest.setEmail(dto.getEmail());
+        guest.setPhone(dto.getPhone());
+        guest.setAddress(dto.getAddress());
+        guest.setIdNumber(dto.getIdNumber());
+        guest.setDateOfBirth(dto.getDateOfBirth());
+        guest.setPreferences(dto.getPreferences());
+        return guest;
+    }
 }
