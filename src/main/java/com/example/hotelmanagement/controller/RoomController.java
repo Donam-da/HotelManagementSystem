@@ -5,6 +5,10 @@ import com.example.hotelmanagement.dto.RoomTypeDTO;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomType;
 import com.example.hotelmanagement.service.RoomService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/rooms")
+@Tag(name = "Room", description = "Quản lý phòng và tìm kiếm phòng trống")
 public class RoomController {
 
     private final RoomService roomService;
@@ -34,7 +39,7 @@ public class RoomController {
     // 2. Tạo phòng mới (Admin dùng)
     // POST /api/v1/rooms?typeId=1
     @PostMapping
-    public RoomDTO createRoom(@RequestBody Room room, @RequestParam Long typeId) {
+    public RoomDTO createRoom(@Valid @RequestBody Room room, @RequestParam Long typeId) {
         Room savedRoom = roomService.createRoom(room, typeId);
         return roomService.convertToDTO(savedRoom);
     }
@@ -53,9 +58,10 @@ public class RoomController {
     // 4. Tìm phòng trống (UC-002)
     // GET /api/v1/rooms/available?checkIn=2026-05-01&checkOut=2026-05-05
     @GetMapping("/available")
+    @Operation(summary = "Tìm kiếm phòng trống", description = "Tìm danh sách các phòng còn trống trong khoảng thời gian được chọn.")
     public List<RoomDTO> findAvailableRooms(
-            @RequestParam LocalDate checkIn,
-            @RequestParam LocalDate checkOut) {
+            @Parameter(description = "Ngày nhận phòng (yyyy-MM-dd)") @RequestParam LocalDate checkIn,
+            @Parameter(description = "Ngày trả phòng (yyyy-MM-dd)") @RequestParam LocalDate checkOut) {
         return roomService.getAvailableRooms(checkIn, checkOut).stream().map(roomService::convertToDTO).collect(Collectors.toList());
     }
 

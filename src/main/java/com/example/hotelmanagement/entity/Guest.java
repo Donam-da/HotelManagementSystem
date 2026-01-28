@@ -1,6 +1,9 @@
 package com.example.hotelmanagement.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -16,13 +19,16 @@ public class Guest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Tên không được để trống")
+    @Size(min = 2, max = 50, message = "Tên phải từ 2 đến 50 ký tự")
     private String firstName;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Họ không được để trống")
     private String lastName;
 
-    @Column(unique = true, nullable = false)
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email không đúng định dạng")
+    @Column(unique = true)
     private String email;
 
     private String phone;

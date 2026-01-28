@@ -1,6 +1,7 @@
 package com.example.hotelmanagement.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import java.time.LocalDate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,7 +19,9 @@ public class Reservation {
     @Column(unique = true)
     private String confirmationNumber; // Mã đặt phòng
 
+    @NotNull(message = "Ngày Check-in không được để trống")
     private LocalDate checkInDate;
+    @NotNull(message = "Ngày Check-out không được để trống")
     private LocalDate checkOutDate;
     private String status;
     

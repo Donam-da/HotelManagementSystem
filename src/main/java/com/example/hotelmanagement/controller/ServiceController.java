@@ -3,6 +3,7 @@ package com.example.hotelmanagement.controller;
 import com.example.hotelmanagement.entity.*;
 import com.example.hotelmanagement.service.BillingService;
 import com.example.hotelmanagement.service.HotelServiceService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class ServiceController {
 
     // 2. Tạo dịch vụ mới (cho Admin)
     @PostMapping
-    public HotelService createService(@RequestBody HotelService service) {
+    public HotelService createService(@Valid @RequestBody HotelService service) {
         return hotelServiceService.createService(service);
     }
 

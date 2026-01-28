@@ -1,6 +1,7 @@
 package com.example.hotelmanagement.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Entity
@@ -13,7 +14,8 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @NotBlank(message = "Số phòng không được để trống")
+    @Column(unique = true, nullable = false)
     private String roomNumber; // Ví dụ: 101, 202
 
     @Enumerated(EnumType.STRING)

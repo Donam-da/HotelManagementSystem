@@ -16,6 +16,9 @@ import java.util.List;
 @Service
 public class BillingService {
 
+    private static final Double SERVICE_FEE_RATE = 0.05;
+    private static final Double TAX_RATE = 0.1;
+
     private final InvoiceRepository invoiceRepository;
     private final ServiceRequestRepository serviceRequestRepository;
     private final HotelServiceRepository hotelServiceRepository;
@@ -75,8 +78,8 @@ public class BillingService {
         Double subtotal = roomTotal + serviceTotal;
         
         // BR-302: Service charge 5% applied to ROOM CHARGES ONLY
-        Double serviceFee = roomTotal * 0.05; 
-        Double tax = (subtotal + serviceFee) * 0.1; // Thuế 10% (Tính trên cả phí dịch vụ)
+        Double serviceFee = roomTotal * SERVICE_FEE_RATE; 
+        Double tax = (subtotal + serviceFee) * TAX_RATE; // Thuế 10% (Tính trên cả phí dịch vụ)
         
         // BR-103: Trừ tiền giảm giá (nếu có)
         Double discount = invoice.getDiscountAmount() != null ? invoice.getDiscountAmount() : 0.0;

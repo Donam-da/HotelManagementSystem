@@ -1,6 +1,8 @@
 package com.example.hotelmanagement.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import java.time.LocalDateTime; // <-- QUAN TRỌNG: Dùng cái này để lưu cả giờ
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,6 +15,8 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull(message = "Số tiền không được để trống")
+    @Positive(message = "Số tiền phải lớn hơn 0")
     private Double amount;          // Số tiền khách trả
     private String paymentMethod;   // CASH, CREDIT_CARD, BANK_TRANSFER
 

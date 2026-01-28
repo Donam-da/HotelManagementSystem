@@ -1,6 +1,8 @@
 package com.example.hotelmanagement.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 @Entity
@@ -11,11 +13,13 @@ public class HotelService {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Tên dịch vụ không được để trống")
     private String name;        // Ví dụ: Coca Cola, Massage, Giặt ủi
     
     // --- BỔ SUNG THEO YÊU CẦU 6.1 ---
     private String description; // Mô tả dịch vụ
 
+    @PositiveOrZero(message = "Giá dịch vụ không được âm")
     private Double price;       // Giá tiền
 
     // --- MỚI THÊM: Phân loại dịch vụ (Theo thiết kế 6.1) ---

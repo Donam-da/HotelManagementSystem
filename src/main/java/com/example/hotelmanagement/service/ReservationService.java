@@ -3,6 +3,7 @@ package com.example.hotelmanagement.service;
 import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.entity.Invoice;
 import com.example.hotelmanagement.entity.Reservation;
+import com.example.hotelmanagement.dto.ReservationDTO;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomStatus;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
@@ -314,5 +315,28 @@ public class ReservationService {
     public Reservation getReservationById(Long id) {
         return reservationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + id));
+    }
+
+    // --- 11. MAPPING ENTITY TO DTO (Thống nhất Clean Code) ---
+    public ReservationDTO convertToDTO(Reservation reservation) {
+        ReservationDTO dto = new ReservationDTO();
+        dto.setId(reservation.getId());
+        dto.setConfirmationNumber(reservation.getConfirmationNumber());
+        dto.setCheckInDate(reservation.getCheckInDate());
+        dto.setCheckOutDate(reservation.getCheckOutDate());
+        dto.setStatus(reservation.getStatus());
+        
+        if (reservation.getGuest() != null) {
+            dto.setGuestName(reservation.getGuest().getFirstName() + " " + reservation.getGuest().getLastName());
+        }
+        
+        if (reservation.getRoom() != null) {
+            dto.setRoomNumber(reservation.getRoom().getRoomNumber());
+        }
+        
+        if (reservation.getInvoice() != null) {
+            dto.setTotalAmount(reservation.getInvoice().getTotalAmount());
+        }
+        return dto;
     }
 }
