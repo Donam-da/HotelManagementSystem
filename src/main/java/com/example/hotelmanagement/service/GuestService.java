@@ -2,6 +2,8 @@ package com.example.hotelmanagement.service;
 
 import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.exception.BusinessException;
+import com.example.hotelmanagement.exception.ResourceNotFoundException;
+import com.example.hotelmanagement.dto.GuestDTO;
 import com.example.hotelmanagement.repository.GuestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +28,7 @@ public class GuestService {
 
     public Guest updateGuestProfile(Long id, Guest guestDetails) {
         Guest guest = guestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
         
         // BR-102: Check email uniqueness if changed
         if (guestDetails.getEmail() != null && !guestDetails.getEmail().equals(guest.getEmail())) {
@@ -49,12 +51,12 @@ public class GuestService {
     // --- BỔ SUNG THEO YÊU CẦU 4.2.1 (Read & Delete) ---
     public Guest getGuestById(Long id) {
         return guestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
     }
 
     public void deleteGuest(Long id) {
         Guest guest = guestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
         
         // THAY ĐỔI: Soft Delete (Yêu cầu 7.2)
         // Thay vì xóa khỏi DB, ta chỉ đánh dấu là đã xóa
@@ -71,5 +73,21 @@ public class GuestService {
     public Page<Guest> getAllGuests(Pageable pageable) {
         // Chỉ lấy những khách chưa bị xóa
         return guestRepository.findByIsDeletedFalse(pageable);
+    }
+
+    // --- MAPPING ENTITY TO DTO (Hỗ trợ mục 9.1.1) ---
+    public GuestDTO convertToDTO(Guest guest) {
+        GuestDTO dto = new GuestDTO();
+        dto.setId(guest.getId());
+        dto.setFirstName(guest.getFirstName());
+        dto.setLastName(guest.getLastName());
+        dto.setEmail(guest.getEmail());
+        dto.setPhone(guest.getPhone());
+        dto.setAddress(guest.getAddress());
+        dto.setIdNumber(guest.getIdNumber());
+        dto.setDateOfBirth(guest.getDateOfBirth());
+        dto.setPreferences(guest.getPreferences());
+        dto.setLoyaltyPoints(guest.getLoyaltyPoints());
+        return dto;
     }
 }

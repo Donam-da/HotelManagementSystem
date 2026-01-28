@@ -1,5 +1,6 @@
 package com.example.hotelmanagement.controller;
 
+import com.example.hotelmanagement.dto.PaymentDTO;
 import com.example.hotelmanagement.entity.Payment;
 import com.example.hotelmanagement.service.BillingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,18 +15,18 @@ public class PaymentController {
 
     // POST /api/v1/invoices/{id}/payments
     @PostMapping("/{invoiceId}/payments")
-    public Payment processPayment(
+    public PaymentDTO processPayment(
             @PathVariable Long invoiceId,
             @RequestBody Payment payment) {
-        return billingService.processPayment(invoiceId, payment);
+        return billingService.convertToPaymentDTO(billingService.processPayment(invoiceId, payment));
     }
 
     // POST /api/v1/invoices/{id}/refunds
     @PostMapping("/{invoiceId}/refunds")
-    public Payment processRefund(
+    public PaymentDTO processRefund(
             @PathVariable Long invoiceId,
             @RequestParam Double amount,
             @RequestParam String reason) {
-        return billingService.processRefund(invoiceId, amount, reason);
+        return billingService.convertToPaymentDTO(billingService.processRefund(invoiceId, amount, reason));
     }
 }

@@ -1,7 +1,9 @@
 package com.example.hotelmanagement.service;
 
+import com.example.hotelmanagement.dto.MaintenanceLogDTO;
 import com.example.hotelmanagement.entity.MaintenanceLog;
 import com.example.hotelmanagement.entity.Room;
+import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.MaintenanceLogRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ public class MaintenanceService {
 
     public MaintenanceLog reportIssue(Long roomId, String description) {
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Phòng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
 
         // Cập nhật trạng thái phòng
         room.setStatus("MAINTENANCE");
@@ -34,7 +36,7 @@ public class MaintenanceService {
 
     public MaintenanceLog completeMaintenance(Long logId, Double cost) {
         MaintenanceLog log = maintenanceLogRepository.findById(logId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu bảo trì"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu bảo trì với ID: " + logId));
 
         log.setResolvedDate(LocalDate.now());
         log.setCost(cost);
@@ -49,5 +51,17 @@ public class MaintenanceService {
 
     public List<MaintenanceLog> getRoomHistory(Long roomId) {
         return maintenanceLogRepository.findByRoomId(roomId);
+    }
+
+    public MaintenanceLogDTO convertToDTO(MaintenanceLog log) {
+        MaintenanceLogDTO dto = new MaintenanceLogDTO();
+        dto.setId(log.getId());
+        dto.setRoomNumber(log.getRoom().getRoomNumber());
+        dto.setIssueDescription(log.getIssueDescription());
+        dto.setReportedDate(log.getReportedDate());
+        dto.setResolvedDate(log.getResolvedDate());
+        dto.setCost(log.getCost());
+        dto.setStatus(log.getStatus());
+        return dto;
     }
 }

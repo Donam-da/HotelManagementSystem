@@ -1,60 +1,57 @@
 package com.example.hotelmanagement.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.example.hotelmanagement.dto.GuestDTO;
 import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.service.GuestService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/guests")
+@RequestMapping("/api/guests")
 public class GuestController {
 
     @Autowired
     private GuestService guestService;
 
-    // 1. Tạo khách mới
     @PostMapping
-    public Guest createGuest(@RequestBody Guest guest) {
-        return guestService.registerGuest(guest);
+    public ResponseEntity<GuestDTO> registerGuest(@RequestBody Guest guest) {
+        Guest savedGuest = guestService.registerGuest(guest);
+        return ResponseEntity.ok(guestService.convertToDTO(savedGuest));
     }
 
-    // 2. Lấy danh sách khách CÓ PHÂN TRANG (Sửa theo yêu cầu 7.2)
-    // GET /api/v1/guests?page=0&size=10
     @GetMapping
-    public Page<Guest> getAllGuests(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return guestService.getAllGuests(pageable);
+    public ResponseEntity<Page<GuestDTO>> getAllGuests(Pageable pageable) {
+        Page<Guest> guests = guestService.getAllGuests(pageable);
+        return ResponseEntity.ok(guests.map(guestService::convertToDTO));
     }
 
-    // 3. Lấy khách theo ID
     @GetMapping("/{id}")
-    public Guest getGuestById(@PathVariable Long id) {
-        return guestService.getGuestById(id);
+    public ResponseEntity<GuestDTO> getGuestById(@PathVariable Long id) {
+        Guest guest = guestService.getGuestById(id);
+        return ResponseEntity.ok(guestService.convertToDTO(guest));
     }
 
-    // 4. Sửa thông tin khách
     @PutMapping("/{id}")
-    public Guest updateGuest(@PathVariable Long id, @RequestBody Guest updateInfo) {
-        return guestService.updateGuestProfile(id, updateInfo);
+    public ResponseEntity<GuestDTO> updateGuest(@PathVariable Long id, @RequestBody Guest guestDetails) {
+        Guest updatedGuest = guestService.updateGuestProfile(id, guestDetails);
+        return ResponseEntity.ok(guestService.convertToDTO(updatedGuest));
     }
-    
-    // 5. Xóa khách (Soft delete - tạm thời dùng Hard delete cho đơn giản)
+
     @DeleteMapping("/{id}")
-    public void deleteGuest(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteGuest(@PathVariable Long id) {
         guestService.deleteGuest(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<GuestDTO>> searchGuests(@RequestParam String keyword) {
+        List<Guest> guests = guestService.searchGuests(keyword);
+        return ResponseEntity.ok(guests.stream().map(guestService::convertToDTO).collect(Collectors.toList()));
     }
 }

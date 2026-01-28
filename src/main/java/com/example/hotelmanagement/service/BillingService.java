@@ -1,6 +1,10 @@
 package com.example.hotelmanagement.service;
 
 import com.example.hotelmanagement.entity.*;
+import com.example.hotelmanagement.dto.InvoiceDTO;
+import com.example.hotelmanagement.dto.PaymentDTO;
+import com.example.hotelmanagement.exception.BusinessException;
+import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +36,10 @@ public class BillingService {
 
     // UC-009: Generate Invoice (Tính toán tổng tiền)
     public Invoice generateInvoice(Reservation reservation) {
+        if (reservation == null || reservation.getRoom() == null) {
+            throw new BusinessException("Thông tin đặt phòng không hợp lệ để tạo hóa đơn!");
+        }
+
         Invoice invoice = reservation.getInvoice();
         if (invoice == null) {
             invoice = new Invoice();
@@ -84,10 +92,10 @@ public class BillingService {
     // UC-008: Request Service (Gọi món/dịch vụ)
     public ServiceRequest addServiceRequest(Long reservationId, Long serviceId, Integer quantity) {
         Reservation res = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đặt phòng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn đặt phòng với ID: " + reservationId));
         
         HotelService service = hotelServiceRepository.findById(serviceId)
-                .orElseThrow(() -> new RuntimeException("Dịch vụ không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Dịch vụ không tồn tại với ID: " + serviceId));
 
         ServiceRequest request = new ServiceRequest();
         request.setReservation(res);
@@ -108,7 +116,7 @@ public class BillingService {
     // UC-010: Process Payment (Thanh toán)
     public Payment processPayment(Long invoiceId, Payment paymentDetails) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
 
         Payment payment = new Payment();
         payment.setAmount(paymentDetails.getAmount());
@@ -123,7 +131,7 @@ public class BillingService {
     // UC-010: Process Refund (Hoàn tiền)
     public Payment processRefund(Long invoiceId, Double amount, String reason) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
 
         Payment refund = new Payment();
         refund.setAmount(-amount); // Số tiền âm để thể hiện hoàn tiền
@@ -138,13 +146,13 @@ public class BillingService {
     // BR-103: Đổi điểm thưởng lấy giảm giá (100 điểm = $1)
     public Invoice redeemLoyaltyPoints(Long invoiceId, Integer pointsToRedeem) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new RuntimeException("Hóa đơn không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
         
         Reservation res = invoice.getReservation();
         Guest guest = res.getGuest();
         
         if (guest.getLoyaltyPoints() < pointsToRedeem) {
-            throw new RuntimeException("Điểm tích lũy không đủ!");
+            throw new BusinessException("Điểm tích lũy không đủ!");
         }
         
         // Quy đổi: 100 điểm = 1 đơn vị tiền tệ
@@ -156,5 +164,34 @@ public class BillingService {
 
         invoice.setDiscountAmount((invoice.getDiscountAmount() != null ? invoice.getDiscountAmount() : 0.0) + discountValue);
         return generateInvoice(res); // Tính toán lại tổng tiền
+    }
+
+    // --- MAPPING METHODS ---
+    public InvoiceDTO convertToInvoiceDTO(Invoice invoice) {
+        InvoiceDTO dto = new InvoiceDTO();
+        dto.setId(invoice.getId());
+        dto.setInvoiceNumber(invoice.getInvoiceNumber());
+        dto.setSubtotal(invoice.getSubtotal());
+        dto.setServiceFee(invoice.getServiceFee());
+        dto.setTaxAmount(invoice.getTaxAmount());
+        dto.setDiscountAmount(invoice.getDiscountAmount());
+        dto.setTotalAmount(invoice.getTotalAmount());
+        if (invoice.getReservation() != null) {
+            dto.setReservationId(invoice.getReservation().getId());
+        }
+        return dto;
+    }
+
+    public PaymentDTO convertToPaymentDTO(Payment payment) {
+        PaymentDTO dto = new PaymentDTO();
+        dto.setId(payment.getId());
+        dto.setAmount(payment.getAmount());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setPaymentDate(payment.getPaymentDate());
+        dto.setTransactionId(payment.getTransactionId());
+        if (payment.getInvoice() != null) {
+            dto.setInvoiceId(payment.getInvoice().getId());
+        }
+        return dto;
     }
 }

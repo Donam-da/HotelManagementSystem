@@ -3,6 +3,10 @@ package com.example.hotelmanagement.service;
 import com.example.hotelmanagement.entity.Amenity;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomType;
+import com.example.hotelmanagement.dto.RoomDTO;
+import com.example.hotelmanagement.dto.RoomTypeDTO;
+import com.example.hotelmanagement.dto.AmenityDTO;
+import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.AmenityRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
 import com.example.hotelmanagement.repository.RoomTypeRepository;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RoomService {
@@ -37,7 +42,7 @@ public class RoomService {
     // UC-011: Manage Room Status (Cập nhật trạng thái thủ công)
     public Room updateRoomStatus(Long roomId, String status) {
         Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Phòng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
         
         // Các trạng thái hợp lệ: AVAILABLE, OCCUPIED, MAINTENANCE, DIRTY
         room.setStatus(status);
@@ -59,7 +64,7 @@ public class RoomService {
 
     public Room createRoom(Room room, Long roomTypeId) {
         RoomType roomType = roomTypeRepository.findById(roomTypeId)
-                .orElseThrow(() -> new RuntimeException("Loại phòng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Loại phòng không tồn tại với ID: " + roomTypeId));
         room.setRoomType(roomType);
         return roomRepository.save(room);
     }
@@ -76,7 +81,7 @@ public class RoomService {
     
     public Amenity updateAmenity(Long id, Amenity details) {
         Amenity amenity = amenityRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tiện nghi không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tiện nghi không tồn tại với ID: " + id));
         amenity.setName(details.getName());
         amenity.setDescription(details.getDescription());
         amenity.setIcon(details.getIcon());
@@ -85,14 +90,51 @@ public class RoomService {
 
     public RoomType addAmenityToType(Long typeId, Long amenityId) {
         RoomType type = roomTypeRepository.findById(typeId)
-                .orElseThrow(() -> new RuntimeException("Loại phòng không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Loại phòng không tồn tại với ID: " + typeId));
         Amenity amenity = amenityRepository.findById(amenityId)
-                .orElseThrow(() -> new RuntimeException("Tiện nghi không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tiện nghi không tồn tại với ID: " + amenityId));
 
         if (!type.getAmenities().contains(amenity)) {
             type.getAmenities().add(amenity);
             return roomTypeRepository.save(type);
         }
         return type;
+    }
+
+    // --- MAPPING ENTITY TO DTO ---
+    public RoomDTO convertToDTO(Room room) {
+        RoomDTO dto = new RoomDTO();
+        dto.setId(room.getId());
+        dto.setRoomNumber(room.getRoomNumber());
+        dto.setStatus(room.getStatus());
+        if (room.getRoomType() != null) {
+            dto.setRoomTypeName(room.getRoomType().getName());
+            dto.setPrice(room.getRoomType().getBasePrice());
+            dto.setCapacity(room.getRoomType().getMaxOccupancy());
+        }
+        return dto;
+    }
+
+    public RoomTypeDTO convertToRoomTypeDTO(RoomType type) {
+        RoomTypeDTO dto = new RoomTypeDTO();
+        dto.setId(type.getId());
+        dto.setName(type.getName());
+        dto.setDescription(type.getDescription());
+        dto.setBasePrice(type.getBasePrice());
+        dto.setMaxOccupancy(type.getMaxOccupancy());
+        dto.setBedType(type.getBedType());
+        if (type.getAmenities() != null) {
+            dto.setAmenities(type.getAmenities().stream().map(this::convertToAmenityDTO).collect(Collectors.toList()));
+        }
+        return dto;
+    }
+
+    public AmenityDTO convertToAmenityDTO(Amenity amenity) {
+        AmenityDTO dto = new AmenityDTO();
+        dto.setId(amenity.getId());
+        dto.setName(amenity.getName());
+        dto.setDescription(amenity.getDescription());
+        dto.setIcon(amenity.getIcon());
+        return dto;
     }
 }

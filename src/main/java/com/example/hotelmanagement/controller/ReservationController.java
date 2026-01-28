@@ -1,9 +1,11 @@
 package com.example.hotelmanagement.controller;
 
 import com.example.hotelmanagement.dto.ReservationDTO;
+import com.example.hotelmanagement.dto.InvoiceDTO;
 import com.example.hotelmanagement.entity.Invoice;
 import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.service.ReservationService;
+import com.example.hotelmanagement.service.BillingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,6 +19,9 @@ public class ReservationController {
 
     @Autowired
     private ReservationService reservationService;
+
+    @Autowired
+    private BillingService billingService;
 
     // Helper: Chuyển đổi Entity sang DTO (Yêu cầu 5.3 - Use DTOs)
     private ReservationDTO convertToDTO(Reservation reservation) {
@@ -88,8 +93,9 @@ public class ReservationController {
 
     // 6. Lấy hóa đơn (GET invoice)
     @GetMapping("/{id}/invoice")
-    public Invoice getInvoice(@PathVariable Long id) {
-        return reservationService.getInvoiceByReservationId(id);
+    public InvoiceDTO getInvoice(@PathVariable Long id) {
+        Invoice invoice = reservationService.getInvoiceByReservationId(id);
+        return billingService.convertToInvoiceDTO(invoice);
     }
 
     // 7. Sửa đơn đặt phòng (Modification - UC-004)
