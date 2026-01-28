@@ -4,12 +4,12 @@ import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.entity.Invoice;
 import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.entity.Room;
+import com.example.hotelmanagement.entity.RoomStatus;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.exception.BusinessException;
 import com.example.hotelmanagement.repository.GuestRepository;
 import com.example.hotelmanagement.repository.ReservationRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,17 +22,20 @@ import java.util.List;
 @Service
 public class ReservationService {
 
-    @Autowired
-    private ReservationRepository reservationRepository;
+    private final ReservationRepository reservationRepository;
+    private final GuestRepository guestRepository;
+    private final RoomRepository roomRepository;
+    private final BillingService billingService;
 
-    @Autowired
-    private GuestRepository guestRepository;
-
-    @Autowired
-    private RoomRepository roomRepository;
-
-    @Autowired
-    private BillingService billingService;
+    public ReservationService(ReservationRepository reservationRepository,
+                              GuestRepository guestRepository,
+                              RoomRepository roomRepository,
+                              BillingService billingService) {
+        this.reservationRepository = reservationRepository;
+        this.guestRepository = guestRepository;
+        this.roomRepository = roomRepository;
+        this.billingService = billingService;
+    }
 
     // --- 1. TẠO ĐƠN ĐẶT PHÒNG MỚI ---
     public Reservation createReservation(Reservation reservation, Long guestId, Long roomId) {
@@ -144,7 +147,7 @@ public class ReservationService {
         
         // [FIX] Cập nhật trạng thái phòng thành OCCUPIED để báo cáo chạy đúng
         Room room = res.getRoom();
-        room.setStatus("OCCUPIED");
+        room.setStatus(RoomStatus.OCCUPIED);
         roomRepository.save(room);
         
         return reservationRepository.save(res);
@@ -164,7 +167,7 @@ public class ReservationService {
         
         // [FIX] Trả phòng về trạng thái AVAILABLE
         Room room = res.getRoom();
-        room.setStatus("AVAILABLE");
+        room.setStatus(RoomStatus.AVAILABLE);
         roomRepository.save(room);
         
         Reservation savedRes = reservationRepository.save(res);

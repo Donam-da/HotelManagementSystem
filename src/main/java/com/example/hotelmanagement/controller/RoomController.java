@@ -5,7 +5,6 @@ import com.example.hotelmanagement.dto.RoomTypeDTO;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomType;
 import com.example.hotelmanagement.service.RoomService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/rooms")
 public class RoomController {
 
-    @Autowired
-    private RoomService roomService;
+    private final RoomService roomService;
+
+    public RoomController(RoomService roomService) {
+        this.roomService = roomService;
+    }
 
     // 1. Tạo loại phòng (Admin dùng)
     // POST /api/v1/rooms/types

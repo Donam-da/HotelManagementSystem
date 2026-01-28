@@ -3,26 +3,33 @@ package com.example.hotelmanagement.service;
 import com.example.hotelmanagement.dto.MaintenanceLogDTO;
 import com.example.hotelmanagement.entity.MaintenanceLog;
 import com.example.hotelmanagement.entity.Room;
+import com.example.hotelmanagement.entity.RoomStatus;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.MaintenanceLogRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class MaintenanceService {
 
-    @Autowired private MaintenanceLogRepository maintenanceLogRepository;
-    @Autowired private RoomRepository roomRepository;
+    private final MaintenanceLogRepository maintenanceLogRepository;
+    private final RoomRepository roomRepository;
 
+    public MaintenanceService(MaintenanceLogRepository maintenanceLogRepository, RoomRepository roomRepository) {
+        this.maintenanceLogRepository = maintenanceLogRepository;
+        this.roomRepository = roomRepository;
+    }
+
+    @Transactional
     public MaintenanceLog reportIssue(Long roomId, String description) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
 
         // Cập nhật trạng thái phòng
-        room.setStatus("MAINTENANCE");
+        room.setStatus(RoomStatus.MAINTENANCE);
         roomRepository.save(room);
 
         MaintenanceLog log = new MaintenanceLog();
@@ -34,6 +41,7 @@ public class MaintenanceService {
         return maintenanceLogRepository.save(log);
     }
 
+    @Transactional
     public MaintenanceLog completeMaintenance(Long logId, Double cost) {
         MaintenanceLog log = maintenanceLogRepository.findById(logId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu bảo trì với ID: " + logId));
@@ -43,7 +51,7 @@ public class MaintenanceService {
         log.setStatus("COMPLETED");
         
         Room room = log.getRoom();
-        room.setStatus("AVAILABLE");
+        room.setStatus(RoomStatus.AVAILABLE);
         roomRepository.save(room);
 
         return maintenanceLogRepository.save(log);

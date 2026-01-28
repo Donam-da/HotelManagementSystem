@@ -3,7 +3,6 @@ package com.example.hotelmanagement.controller;
 import com.example.hotelmanagement.entity.*;
 import com.example.hotelmanagement.service.BillingService;
 import com.example.hotelmanagement.service.HotelServiceService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -11,8 +10,13 @@ import java.util.List;
 @RequestMapping("/api/v1/services")
 public class ServiceController {
 
-    @Autowired private HotelServiceService hotelServiceService;
-    @Autowired private BillingService billingService;
+    private final HotelServiceService hotelServiceService;
+    private final BillingService billingService;
+
+    public ServiceController(HotelServiceService hotelServiceService, BillingService billingService) {
+        this.hotelServiceService = hotelServiceService;
+        this.billingService = billingService;
+    }
 
     // 1. Xem danh sách dịch vụ
     @GetMapping

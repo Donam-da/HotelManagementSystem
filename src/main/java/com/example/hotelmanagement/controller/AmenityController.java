@@ -2,7 +2,6 @@ package com.example.hotelmanagement.controller;
 
 import com.example.hotelmanagement.entity.Amenity;
 import com.example.hotelmanagement.service.RoomService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,8 +10,11 @@ import java.util.List;
 @RequestMapping("/api/v1/amenities")
 public class AmenityController {
 
-    @Autowired
-    private RoomService roomService;
+    private final RoomService roomService;
+
+    public AmenityController(RoomService roomService) {
+        this.roomService = roomService;
+    }
 
     // 1. Lấy danh sách tiện nghi
     @GetMapping

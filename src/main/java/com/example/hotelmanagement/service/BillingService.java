@@ -6,7 +6,6 @@ import com.example.hotelmanagement.dto.PaymentDTO;
 import com.example.hotelmanagement.exception.BusinessException;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,23 +15,26 @@ import java.util.List;
 @Service
 public class BillingService {
 
-    @Autowired
-    private InvoiceRepository invoiceRepository;
+    private final InvoiceRepository invoiceRepository;
+    private final ServiceRequestRepository serviceRequestRepository;
+    private final HotelServiceRepository hotelServiceRepository;
+    private final ReservationRepository reservationRepository;
+    private final PaymentRepository paymentRepository;
+    private final GuestRepository guestRepository;
 
-    @Autowired
-    private ServiceRequestRepository serviceRequestRepository;
-
-    @Autowired
-    private HotelServiceRepository hotelServiceRepository;
-
-    @Autowired
-    private ReservationRepository reservationRepository;
-    
-    @Autowired
-    private PaymentRepository paymentRepository;
-
-    @Autowired
-    private GuestRepository guestRepository;
+    public BillingService(InvoiceRepository invoiceRepository,
+                          ServiceRequestRepository serviceRequestRepository,
+                          HotelServiceRepository hotelServiceRepository,
+                          ReservationRepository reservationRepository,
+                          PaymentRepository paymentRepository,
+                          GuestRepository guestRepository) {
+        this.invoiceRepository = invoiceRepository;
+        this.serviceRequestRepository = serviceRequestRepository;
+        this.hotelServiceRepository = hotelServiceRepository;
+        this.reservationRepository = reservationRepository;
+        this.paymentRepository = paymentRepository;
+        this.guestRepository = guestRepository;
+    }
 
     // UC-009: Generate Invoice (Tính toán tổng tiền)
     public Invoice generateInvoice(Reservation reservation) {

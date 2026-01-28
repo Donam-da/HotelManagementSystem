@@ -4,7 +4,6 @@ import com.example.hotelmanagement.repository.GuestRepository;
 import com.example.hotelmanagement.repository.InvoiceRepository;
 import com.example.hotelmanagement.repository.PaymentRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -13,17 +12,18 @@ import java.util.Map;
 @Service
 public class ReportService {
 
-    @Autowired
-    private InvoiceRepository invoiceRepository;
-    
-    @Autowired
-    private PaymentRepository paymentRepository; // Dùng cái này để tính tổng tiền nhanh hơn
+    private final InvoiceRepository invoiceRepository;
+    private final PaymentRepository paymentRepository;
+    private final RoomRepository roomRepository;
+    private final GuestRepository guestRepository;
 
-    @Autowired
-    private RoomRepository roomRepository;
-
-    @Autowired
-    private GuestRepository guestRepository;
+    public ReportService(InvoiceRepository invoiceRepository, PaymentRepository paymentRepository, 
+                         RoomRepository roomRepository, GuestRepository guestRepository) {
+        this.invoiceRepository = invoiceRepository;
+        this.paymentRepository = paymentRepository;
+        this.roomRepository = roomRepository;
+        this.guestRepository = guestRepository;
+    }
 
     public Map<String, Object> getRevenueReport() {
         // 5.3 Performance: Dùng Query SUM trực tiếp từ DB thay vì load list Invoice

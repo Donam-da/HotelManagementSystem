@@ -1,7 +1,6 @@
 package com.example.hotelmanagement.controller;
 
 import com.example.hotelmanagement.service.ReportService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,8 +11,11 @@ import java.util.Map;
 @RequestMapping("/api/v1/reports")
 public class ReportController {
 
-    @Autowired
-    private ReportService reportService;
+    private final ReportService reportService;
+
+    public ReportController(ReportService reportService) {
+        this.reportService = reportService;
+    }
 
     // 1. Thống kê doanh thu (Revenue Analytics)
     @GetMapping("/revenue")

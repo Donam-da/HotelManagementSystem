@@ -3,6 +3,7 @@ package com.example.hotelmanagement.service;
 import com.example.hotelmanagement.entity.Amenity;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomType;
+import com.example.hotelmanagement.entity.RoomStatus;
 import com.example.hotelmanagement.dto.RoomDTO;
 import com.example.hotelmanagement.dto.RoomTypeDTO;
 import com.example.hotelmanagement.dto.AmenityDTO;
@@ -10,7 +11,6 @@ import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.AmenityRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
 import com.example.hotelmanagement.repository.RoomTypeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,14 +22,17 @@ import java.util.stream.Collectors;
 @Service
 public class RoomService {
 
-    @Autowired
-    private RoomRepository roomRepository;
+    private final RoomRepository roomRepository;
+    private final RoomTypeRepository roomTypeRepository;
+    private final AmenityRepository amenityRepository;
 
-    @Autowired
-    private RoomTypeRepository roomTypeRepository;
-
-    @Autowired
-    private AmenityRepository amenityRepository;
+    public RoomService(RoomRepository roomRepository, 
+                       RoomTypeRepository roomTypeRepository, 
+                       AmenityRepository amenityRepository) {
+        this.roomRepository = roomRepository;
+        this.roomTypeRepository = roomTypeRepository;
+        this.amenityRepository = amenityRepository;
+    }
 
     // UC-002: Search Available Rooms (Nâng cao)
     public List<Room> searchRooms(LocalDate checkIn, LocalDate checkOut, Long typeId, Integer capacity) {
@@ -45,7 +48,7 @@ public class RoomService {
                 .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
         
         // Các trạng thái hợp lệ: AVAILABLE, OCCUPIED, MAINTENANCE, DIRTY
-        room.setStatus(status);
+        room.setStatus(RoomStatus.valueOf(status.toUpperCase()));
         return roomRepository.save(room);
     }
     
@@ -106,7 +109,7 @@ public class RoomService {
         RoomDTO dto = new RoomDTO();
         dto.setId(room.getId());
         dto.setRoomNumber(room.getRoomNumber());
-        dto.setStatus(room.getStatus());
+        dto.setStatus(room.getStatus() != null ? room.getStatus().name() : null);
         if (room.getRoomType() != null) {
             dto.setRoomTypeName(room.getRoomType().getName());
             dto.setPrice(room.getRoomType().getBasePrice());

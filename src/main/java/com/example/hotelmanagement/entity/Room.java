@@ -16,7 +16,8 @@ public class Room {
     @Column(unique = true)
     private String roomNumber; // Ví dụ: 101, 202
 
-    private String status; // Available, Occupied, Maintenance
+    @Enumerated(EnumType.STRING)
+    private RoomStatus status; 
     
     private int floor; // Tầng
 

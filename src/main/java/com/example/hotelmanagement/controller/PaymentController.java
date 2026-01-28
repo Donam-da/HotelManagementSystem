@@ -3,15 +3,17 @@ package com.example.hotelmanagement.controller;
 import com.example.hotelmanagement.dto.PaymentDTO;
 import com.example.hotelmanagement.entity.Payment;
 import com.example.hotelmanagement.service.BillingService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/invoices")
 public class PaymentController {
 
-    @Autowired
-    private BillingService billingService;
+    private final BillingService billingService;
+
+    public PaymentController(BillingService billingService) {
+        this.billingService = billingService;
+    }
 
     // POST /api/v1/invoices/{id}/payments
     @PostMapping("/{invoiceId}/payments")

@@ -3,7 +3,6 @@ package com.example.hotelmanagement.controller;
 import com.example.hotelmanagement.dto.GuestDTO;
 import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.service.GuestService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +15,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/guests")
 public class GuestController {
 
-    @Autowired
-    private GuestService guestService;
+    private final GuestService guestService;
+
+    public GuestController(GuestService guestService) {
+        this.guestService = guestService;
+    }
 
     @PostMapping
     public ResponseEntity<GuestDTO> registerGuest(@RequestBody Guest guest) {

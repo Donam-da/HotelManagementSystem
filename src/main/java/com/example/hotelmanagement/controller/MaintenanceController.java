@@ -2,7 +2,6 @@ package com.example.hotelmanagement.controller;
 
 import com.example.hotelmanagement.dto.MaintenanceLogDTO;
 import com.example.hotelmanagement.service.MaintenanceService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,8 +11,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/maintenance")
 public class MaintenanceController {
 
-    @Autowired
-    private MaintenanceService maintenanceService;
+    private final MaintenanceService maintenanceService;
+
+    public MaintenanceController(MaintenanceService maintenanceService) {
+        this.maintenanceService = maintenanceService;
+    }
 
     // 1. Báo cáo sự cố mới (Report Issue)
     // POST /api/v1/maintenance/report?roomId=1&description=Hỏng máy lạnh

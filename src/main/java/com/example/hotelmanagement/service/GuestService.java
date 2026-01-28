@@ -5,7 +5,6 @@ import com.example.hotelmanagement.exception.BusinessException;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.dto.GuestDTO;
 import com.example.hotelmanagement.repository.GuestRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,8 +13,11 @@ import java.util.List;
 @Service
 public class GuestService {
 
-    @Autowired
-    private GuestRepository guestRepository;
+    private final GuestRepository guestRepository;
+
+    public GuestService(GuestRepository guestRepository) {
+        this.guestRepository = guestRepository;
+    }
 
     // UC-001: Register Guest
     public Guest registerGuest(Guest guest) {

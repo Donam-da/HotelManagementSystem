@@ -6,7 +6,6 @@ import com.example.hotelmanagement.entity.Invoice;
 import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.service.ReservationService;
 import com.example.hotelmanagement.service.BillingService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,11 +16,13 @@ import java.time.LocalDate; // Import LocalDate
 @RequestMapping("/api/v1/reservations")
 public class ReservationController {
 
-    @Autowired
-    private ReservationService reservationService;
+    private final ReservationService reservationService;
+    private final BillingService billingService;
 
-    @Autowired
-    private BillingService billingService;
+    public ReservationController(ReservationService reservationService, BillingService billingService) {
+        this.reservationService = reservationService;
+        this.billingService = billingService;
+    }
 
     // Helper: Chuyển đổi Entity sang DTO (Yêu cầu 5.3 - Use DTOs)
     private ReservationDTO convertToDTO(Reservation reservation) {
