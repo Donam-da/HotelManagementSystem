@@ -7,6 +7,7 @@ import com.example.hotelmanagement.dto.GuestDTO;
 import com.example.hotelmanagement.repository.GuestRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
 import java.util.List;
 
@@ -20,6 +21,7 @@ public class GuestService {
     }
 
     // UC-001: Register Guest
+    @Transactional
     public Guest registerGuest(Guest guest) {
         // BR-102: Email address must be unique
         if (guestRepository.existsByEmail(guest.getEmail())) {
@@ -28,6 +30,7 @@ public class GuestService {
         return guestRepository.save(guest);
     }
 
+    @Transactional
     public Guest updateGuestProfile(Long id, Guest guestDetails) {
         Guest guest = guestRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
@@ -56,6 +59,7 @@ public class GuestService {
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
     }
 
+    @Transactional
     public void deleteGuest(Long id) {
         Guest guest = guestRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));

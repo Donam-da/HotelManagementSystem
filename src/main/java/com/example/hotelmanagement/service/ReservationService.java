@@ -13,6 +13,7 @@ import com.example.hotelmanagement.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,6 +39,7 @@ public class ReservationService {
     }
 
     // --- 1. TẠO ĐƠN ĐẶT PHÒNG MỚI ---
+    @Transactional
     public Reservation createReservation(Reservation reservation, Long guestId, Long roomId) {
         // A. Validate ngày tháng
         if (reservation.getCheckInDate().isBefore(LocalDate.now())) {
@@ -89,6 +91,7 @@ public class ReservationService {
     }
 
     // --- BỔ SUNG: XÁC NHẬN ĐẶT PHÒNG (Pending -> Confirmed) ---
+    @Transactional
     public Reservation confirmReservation(Long reservationId) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
@@ -97,6 +100,7 @@ public class ReservationService {
     }
 
     // --- 2. HỦY ĐẶT PHÒNG (PATCH cancel) ---
+    @Transactional
     public Reservation cancelReservation(Long reservationId) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
@@ -134,6 +138,7 @@ public class ReservationService {
     }
 
     // --- 3. CHECK-IN (PATCH check-in) ---
+    @Transactional
     public Reservation checkIn(Long reservationId) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
@@ -154,6 +159,7 @@ public class ReservationService {
     }
 
     // --- 4. CHECK-OUT (PATCH check-out) ---
+    @Transactional
     public Reservation checkOut(Long reservationId) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
@@ -202,9 +208,9 @@ public class ReservationService {
 
     // --- 6. HÀM PHỤ TRỢ: KIỂM TRA PHÒNG TRỐNG ---
     private boolean checkRoomAvailability(Long roomId, LocalDate checkIn, LocalDate checkOut) {
-        List<Room> availableRooms = roomRepository.findAvailableRooms(checkIn, checkOut);
-        // Kiểm tra xem phòng mình chọn có nằm trong danh sách phòng trống không
-        return availableRooms.stream().anyMatch(r -> r.getId().equals(roomId));
+        // Sử dụng countOverlappingReservations với excludeReservationId = -1 (không loại trừ ai)
+        long overlap = roomRepository.countOverlappingReservations(roomId, checkIn, checkOut, -1L);
+        return overlap == 0;
     }
     
     // --- 7. LẤY TẤT CẢ ---
@@ -219,6 +225,7 @@ public class ReservationService {
 
     // --- 8. SỬA ĐỔI ĐẶT PHÒNG (Modification) ---
     // UC-004: Modify Reservation (Dates & Room)
+    @Transactional
     public Reservation modifyReservation(Long reservationId, LocalDate newCheckIn, LocalDate newCheckOut, Long newRoomId, Long newGuestId) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
@@ -283,6 +290,7 @@ public class ReservationService {
 
     // --- 9. XỬ LÝ NO-SHOW (Khách không đến) ---
     // UC-005 / 4.2.3: Manage reservation statuses (No-Show)
+    @Transactional
     public Reservation markAsNoShow(Long reservationId) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));

@@ -7,6 +7,7 @@ import com.example.hotelmanagement.exception.BusinessException;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -92,6 +93,7 @@ public class BillingService {
     }
 
     // UC-008: Request Service (Gọi món/dịch vụ)
+    @Transactional
     public ServiceRequest addServiceRequest(Long reservationId, Long serviceId, Integer quantity) {
         Reservation res = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn đặt phòng với ID: " + reservationId));
@@ -116,6 +118,7 @@ public class BillingService {
     }
 
     // UC-010: Process Payment (Thanh toán)
+    @Transactional
     public Payment processPayment(Long invoiceId, Payment paymentDetails) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
@@ -131,6 +134,7 @@ public class BillingService {
     }
 
     // UC-010: Process Refund (Hoàn tiền)
+    @Transactional
     public Payment processRefund(Long invoiceId, Double amount, String reason) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
@@ -146,6 +150,7 @@ public class BillingService {
     }
 
     // BR-103: Đổi điểm thưởng lấy giảm giá (100 điểm = $1)
+    @Transactional
     public Invoice redeemLoyaltyPoints(Long invoiceId, Integer pointsToRedeem) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
