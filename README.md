@@ -88,7 +88,7 @@ Sau khi ứng dụng khởi chạy, truy cập:
 
 ## 7. Sơ đồ hệ thống (Thiết kế)
 
-### 7.1. Sơ đồ thực thể (ERD)
+### 7.1. Sơ đồ thực thể (ERD)(Có trong báo cáo Word)
 Hệ thống bao gồm các thực thể chính:
 * **Guest:** Thông tin khách hàng và điểm tích lũy.
 * **Room & RoomType:** Quản lý phòng vật lý và cấu hình loại phòng (giá, tiện nghi).
