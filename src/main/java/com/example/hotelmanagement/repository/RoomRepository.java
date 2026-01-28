@@ -1,6 +1,7 @@
 package com.example.hotelmanagement.repository;
 
 import com.example.hotelmanagement.entity.Room;
+import com.example.hotelmanagement.entity.RoomStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -49,5 +50,5 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                                       @Param("excludeReservationId") Long excludeReservationId);
 
     // --- BỔ SUNG CHO REPORT SERVICE (Performance Optimization) ---
-    long countByStatus(String status);
+    long countByStatus(RoomStatus status);
 }

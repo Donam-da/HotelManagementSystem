@@ -12,8 +12,8 @@ public interface GuestRepository extends JpaRepository<Guest, Long> {
     Page<Guest> findByIsDeletedFalse(Pageable pageable);
     
     @Query("SELECT g FROM Guest g WHERE g.isDeleted = false AND " +
-           "(LOWER(g.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "(:keyword IS NULL OR LOWER(g.firstName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
            "LOWER(g.lastName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "g.email LIKE CONCAT('%', :keyword, '%'))")
+           "LOWER(g.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Guest> searchGuests(String keyword);
 }

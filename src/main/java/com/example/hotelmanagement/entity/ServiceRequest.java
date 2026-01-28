@@ -2,6 +2,7 @@ package com.example.hotelmanagement.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,6 +15,7 @@ public class ServiceRequest {
 
     @ManyToOne
     @JoinColumn(name = "reservation_id")
+    @JsonIgnore
     private Reservation reservation; // Dịch vụ này tính cho đơn đặt phòng nào
 
     @ManyToOne

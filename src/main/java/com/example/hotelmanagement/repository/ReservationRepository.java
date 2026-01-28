@@ -12,7 +12,7 @@ import java.util.List;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     
     // Giải quyết vấn đề N+1 Query bằng JOIN FETCH
-    @Query("SELECT r FROM Reservation r JOIN FETCH r.guest JOIN FETCH r.room JOIN FETCH r.room.roomType")
+    @Query(value = "SELECT r FROM Reservation r JOIN FETCH r.guest JOIN FETCH r.room JOIN FETCH r.room.roomType", countQuery = "SELECT count(r) FROM Reservation r")
     List<Reservation> findAllWithDetails();
 
     // Hỗ trợ phân trang và tránh N+1 (Yêu cầu 5.2 & 5.3)

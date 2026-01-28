@@ -30,7 +30,7 @@ public class Invoice {
     // --- QUAN HỆ ---
     
     // Quan hệ 1-1: Khóa ngoại trỏ về Reservation
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reservation_id")
     @JsonIgnore // Tránh vòng lặp vô hạn khi chuyển thành JSON
     private Reservation reservation;

@@ -2,11 +2,15 @@ package com.example.hotelmanagement.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "guests")
 @Data
+@SQLDelete(sql = "UPDATE guests SET is_deleted = true WHERE id = ?")
+@SQLRestriction("is_deleted = false")
 public class Guest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

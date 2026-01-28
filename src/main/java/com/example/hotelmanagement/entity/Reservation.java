@@ -42,6 +42,7 @@ public class Reservation {
 
     // --- BỔ SUNG THEO YÊU CẦU 6.1 (Quan hệ với ReservationRoom) ---
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL)
+    @OrderBy("id ASC")
     private List<ReservationRoom> reservationRooms; // Danh sách phòng trong đơn đặt
 
     // Tự động sinh mã khi tạo mới

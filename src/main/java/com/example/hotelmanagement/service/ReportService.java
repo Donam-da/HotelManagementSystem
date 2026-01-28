@@ -1,5 +1,6 @@
 package com.example.hotelmanagement.service;
 
+import com.example.hotelmanagement.entity.RoomStatus;
 import com.example.hotelmanagement.repository.GuestRepository;
 import com.example.hotelmanagement.repository.InvoiceRepository;
 import com.example.hotelmanagement.repository.PaymentRepository;
@@ -41,7 +42,7 @@ public class ReportService {
         long totalRooms = roomRepository.count();
         
         // 5.3 Performance: Dùng countByStatus để DB tự đếm
-        long occupiedRooms = roomRepository.countByStatus("OCCUPIED");
+        long occupiedRooms = roomRepository.countByStatus(RoomStatus.OCCUPIED);
         
         Map<String, Long> response = new HashMap<>();
         response.put("totalRooms", totalRooms);
