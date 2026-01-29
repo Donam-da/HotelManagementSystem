@@ -1,5 +1,11 @@
 # Hotel Management System
 
+## Thông tin đồ án
+* **Giảng viên hướng dẫn:** TS. Bùi Hoa
+* **Sinh viên thực hiện:**
+    * Đỗ Hoài Nam
+    * Nguyễn Văn Minh
+
 Hệ thống quản lý khách sạn (HMS) toàn diện được xây dựng trên nền tảng Spring Boot, hỗ trợ quản lý vòng đời đặt phòng, dịch vụ khách hàng, hóa đơn và chương trình khách hàng thân thiết.
 
 ## 1. Công nghệ sử dụng
