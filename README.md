@@ -9,7 +9,7 @@
 Hệ thống quản lý khách sạn (HMS) toàn diện được xây dựng trên nền tảng Spring Boot, hỗ trợ quản lý vòng đời đặt phòng, dịch vụ khách hàng, hóa đơn và chương trình khách hàng thân thiết.
 
 ## 1. Công nghệ sử dụng
-* **Backend:** Java 17, Spring Boot 3.x, Spring Data JPA.
+* **Backend:** Java 24, Spring Boot 3.x, Spring Data JPA.
 * **Database:** MySQL 8.0+.
 * **Documentation:** Swagger UI (OpenAPI 3.0).
 * **Build Tool:** Maven.
