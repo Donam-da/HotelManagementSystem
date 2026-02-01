@@ -49,8 +49,10 @@ public class GuestController {
 
     @GetMapping
     @Operation(summary = "Lấy danh sách khách hàng", description = "Trả về danh sách khách hàng có hỗ trợ phân trang.")
-    public ResponseEntity<Page<GuestDTO>> getAllGuests(Pageable pageable) {
-        Page<Guest> guests = guestService.getAllGuests(pageable);
+    public ResponseEntity<Page<GuestDTO>> getAllGuests(
+            Pageable pageable,
+            @RequestParam(required = false, defaultValue = "false") boolean includeDeleted) {
+        Page<Guest> guests = guestService.getAllGuests(pageable, includeDeleted);
         return ResponseEntity.ok(guests.map(guestService::convertToDTO));
     }
 

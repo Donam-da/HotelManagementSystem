@@ -446,11 +446,22 @@
             new bootstrap.Modal(document.getElementById('invoiceModal')).show();
         }
 
-        function loadDashboard() {
-            // Giả lập dữ liệu dashboard (hoặc gọi API /reports nếu đã implement)
-            document.getElementById('dash-occupied').innerText = '12';
-            document.getElementById('dash-revenue').innerText = '45.200.000 đ';
-            document.getElementById('dash-guests').innerText = '8';
+        async function loadDashboard() {
+            try {
+                const [resOcc, resRev, resGuest] = await Promise.all([
+                    fetch(`${API_BASE}/reports/occupancy`),
+                    fetch(`${API_BASE}/reports/revenue`),
+                    fetch(`${API_BASE}/reports/guest-stats`)
+                ]);
+
+                const occ = await resOcc.json();
+                const rev = await resRev.json();
+                const guest = await resGuest.json();
+
+                document.getElementById('dash-occupied').innerText = occ.occupiedRooms || 0;
+                document.getElementById('dash-revenue').innerText = (rev.totalRevenue || 0).toLocaleString('vi-VN') + ' đ';
+                document.getElementById('dash-guests').innerText = guest.totalGuests || 0;
+            } catch (e) { console.error("Lỗi tải dashboard", e); }
         }
 
         // Init

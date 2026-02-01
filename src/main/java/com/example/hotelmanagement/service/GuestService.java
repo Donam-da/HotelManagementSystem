@@ -76,7 +76,10 @@ public class GuestService {
     }
 
     // --- BỔ SUNG CHO CONTROLLER (Layered Architecture) ---
-    public Page<Guest> getAllGuests(Pageable pageable) {
+    public Page<Guest> getAllGuests(Pageable pageable, boolean includeDeleted) {
+        if (includeDeleted) {
+            return guestRepository.findAll(pageable);
+        }
         // Chỉ lấy những khách chưa bị xóa
         return guestRepository.findByIsDeletedFalse(pageable);
     }
