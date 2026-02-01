@@ -21,4 +21,8 @@ public class HotelServiceService {
     public HotelService createService(HotelService service) {
         return repository.save(Objects.requireNonNull(service));
     }
+
+    public void deleteService(Long id) {
+        repository.deleteById(Objects.requireNonNull(id));
+    }
 }
