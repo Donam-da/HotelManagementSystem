@@ -73,6 +73,10 @@ public class RoomService {
         return roomTypeRepository.save(Objects.requireNonNull(roomType));
     }
 
+    public List<RoomType> getAllRoomTypes() {
+        return roomTypeRepository.findAll();
+    }
+
     public Room createRoom(Room room, Long roomTypeId) {
         RoomType roomType = roomTypeRepository.findById(Objects.requireNonNull(roomTypeId))
                 .orElseThrow(() -> new ResourceNotFoundException("Loại phòng không tồn tại với ID: " + roomTypeId));

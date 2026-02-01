@@ -37,6 +37,14 @@ public class RoomController {
         return roomService.convertToRoomTypeDTO(roomService.createRoomType(type));
     }
 
+    // 1.1 Lấy danh sách loại phòng
+    @GetMapping("/types")
+    public List<RoomTypeDTO> getAllRoomTypes() {
+        return roomService.getAllRoomTypes().stream()
+                .map(roomService::convertToRoomTypeDTO)
+                .collect(Collectors.toList());
+    }
+
     // 2. Tạo phòng mới (Admin dùng)
     // POST /api/v1/rooms?typeId=1
     @PostMapping
