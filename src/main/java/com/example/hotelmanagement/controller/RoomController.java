@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -70,5 +71,12 @@ public class RoomController {
     @PostMapping("/types/{typeId}/amenities/{amenityId}")
     public RoomTypeDTO addAmenityToType(@PathVariable Long typeId, @PathVariable Long amenityId) {
         return roomService.convertToRoomTypeDTO(roomService.addAmenityToType(typeId, amenityId));
+    }
+
+    // 5. Lấy dữ liệu cho Sơ đồ phòng (Visual Map)
+    // GET /api/v1/rooms/map
+    @GetMapping("/map")
+    public List<Map<String, Object>> getRoomMap() {
+        return roomService.getRoomMapData();
     }
 }

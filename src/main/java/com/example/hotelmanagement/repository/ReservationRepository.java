@@ -23,4 +23,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     Page<Reservation> findAll(@NonNull Pageable pageable);
 
     long countByCheckOutDateAndStatus(LocalDate checkOutDate, String status);
+
+    // Tìm đơn đặt phòng đang hoạt động (CHECKED_IN) của một phòng để lấy thông tin nhanh
+    Reservation findFirstByRoomIdAndStatus(Long roomId, String status);
 }

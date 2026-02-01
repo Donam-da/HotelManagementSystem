@@ -1,6 +1,7 @@
 package com.example.hotelmanagement.service;
 
 import com.example.hotelmanagement.entity.Amenity;
+import com.example.hotelmanagement.entity.Reservation;
 import com.example.hotelmanagement.entity.Room;
 import com.example.hotelmanagement.entity.RoomType;
 import com.example.hotelmanagement.entity.RoomStatus;
@@ -9,6 +10,7 @@ import com.example.hotelmanagement.dto.RoomTypeDTO;
 import com.example.hotelmanagement.dto.AmenityDTO;
 import com.example.hotelmanagement.exception.ResourceNotFoundException;
 import com.example.hotelmanagement.repository.AmenityRepository;
+import com.example.hotelmanagement.repository.ReservationRepository;
 import com.example.hotelmanagement.repository.RoomRepository;
 import com.example.hotelmanagement.repository.RoomTypeRepository;
 import org.springframework.data.domain.Page;
@@ -16,6 +18,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,13 +30,16 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomTypeRepository roomTypeRepository;
     private final AmenityRepository amenityRepository;
+    private final ReservationRepository reservationRepository;
 
     public RoomService(RoomRepository roomRepository, 
                        RoomTypeRepository roomTypeRepository, 
-                       AmenityRepository amenityRepository) {
+                       AmenityRepository amenityRepository,
+                       ReservationRepository reservationRepository) {
         this.roomRepository = roomRepository;
         this.roomTypeRepository = roomTypeRepository;
         this.amenityRepository = amenityRepository;
+        this.reservationRepository = reservationRepository;
     }
 
     // UC-002: Search Available Rooms (Nâng cao)
@@ -103,6 +110,29 @@ public class RoomService {
             return roomTypeRepository.save(type);
         }
         return type;
+    }
+
+    // --- VISUAL ROOM MAP DATA ---
+    public List<Map<String, Object>> getRoomMapData() {
+        List<Room> rooms = roomRepository.findAll();
+        return rooms.stream().map(room -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", room.getId());
+            map.put("roomNumber", room.getRoomNumber());
+            map.put("status", room.getStatus().name());
+            map.put("typeName", room.getRoomType().getName());
+            map.put("price", room.getRoomType().getBasePrice());
+            
+            // Nếu phòng đang có khách, lấy ID đặt phòng để hỗ trợ xem hóa đơn nhanh
+            if (room.getStatus() == RoomStatus.OCCUPIED) {
+                Reservation res = reservationRepository.findFirstByRoomIdAndStatus(room.getId(), "CHECKED_IN");
+                if (res != null) {
+                    map.put("currentReservationId", res.getId());
+                    map.put("guestName", res.getGuest().getFirstName() + " " + res.getGuest().getLastName());
+                }
+            }
+            return map;
+        }).collect(Collectors.toList());
     }
 
     // --- MAPPING ENTITY TO DTO ---
