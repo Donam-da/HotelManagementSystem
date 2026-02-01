@@ -69,6 +69,11 @@
                         <i class="fa-solid fa-bell-concierge me-2"></i> Dịch vụ & Kho
                     </a>
                 </li>
+                <li>
+                    <a href="#" class="nav-link" onclick="showSection('analytics', this)">
+                        <i class="fa-solid fa-chart-line me-2"></i> Báo cáo & Phân tích
+                    </a>
+                </li>
             </ul>
             <hr>
             <div class="dropdown">
@@ -282,6 +287,39 @@
                 </div>
             </div>
 
+            <!-- Section: Analytics -->
+            <div id="analytics" class="content-section d-none">
+                <h2 class="mb-4">Báo cáo & Phân tích dữ liệu</h2>
+                
+                <div class="row g-4">
+                    <!-- Occupancy Rate Chart -->
+                    <div class="col-md-8">
+                        <div class="card p-4 h-100">
+                            <h5 class="card-title mb-4"><i class="fa-solid fa-chart-column text-primary"></i> Công suất phòng 6 tháng gần nhất (%)</h5>
+                            <div style="height: 300px;">
+                                <canvas id="occupancyHistoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Guests -->
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h5 class="card-title mb-3"><i class="fa-solid fa-crown text-warning"></i> Top Khách hàng thân thiết</h5>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Khách hàng</th>
+                                        <th class="text-end">Điểm</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="top-guests-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -414,6 +452,7 @@
             if (sectionId === 'dashboard') loadDashboard();
             if (sectionId === 'room-map') loadRoomMap();
             if (sectionId === 'services-inventory') { loadServices(); loadInventory(); }
+            if (sectionId === 'analytics') loadAnalytics();
         }
 
         // 2. API Functions
@@ -820,6 +859,44 @@
 
         async function deleteInventory(id) {
             if(confirm('Xóa vật tư này?')) { await fetch(`${API_BASE}/inventory/${id}`, { method: 'DELETE' }); loadInventory(); }
+        }
+
+        // --- ANALYTICS LOGIC ---
+        async function loadAnalytics() {
+            // 1. Load Occupancy Chart
+            const resOcc = await fetch(`${API_BASE}/reports/occupancy-history`);
+            const occData = await resOcc.json();
+            
+            const ctx = document.getElementById('occupancyHistoryChart').getContext('2d');
+            if(window.occHistoryChart) window.occHistoryChart.destroy();
+            
+            window.occHistoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: occData.labels,
+                    datasets: [{
+                        label: 'Tỉ lệ lấp đầy (%)',
+                        data: occData.data,
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+            });
+
+            // 2. Load Top Guests
+            const resGuest = await fetch(`${API_BASE}/reports/top-guests`);
+            const guests = await resGuest.json();
+            const tbody = document.getElementById('top-guests-body');
+            tbody.innerHTML = '';
+            guests.forEach(g => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${g.firstName} ${g.lastName}</td>
+                        <td class="text-end fw-bold text-warning">${g.loyaltyPoints || 0}</td>
+                    </tr>`;
+            });
         }
 
         // Init

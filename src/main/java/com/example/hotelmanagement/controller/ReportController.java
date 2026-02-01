@@ -1,5 +1,6 @@
 package com.example.hotelmanagement.controller;
 
+import com.example.hotelmanagement.entity.Guest;
 import com.example.hotelmanagement.service.ReportService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,5 +47,17 @@ public class ReportController {
     @GetMapping("/notifications")
     public List<Map<String, String>> getNotifications() {
         return reportService.getDashboardNotifications();
+    }
+
+    // 6. Biểu đồ công suất phòng (Occupancy History)
+    @GetMapping("/occupancy-history")
+    public Map<String, Object> getOccupancyHistory() {
+        return reportService.getOccupancyHistory();
+    }
+
+    // 7. Top khách hàng thân thiết
+    @GetMapping("/top-guests")
+    public List<Guest> getTopGuests() {
+        return reportService.getTopLoyalGuests();
     }
 }

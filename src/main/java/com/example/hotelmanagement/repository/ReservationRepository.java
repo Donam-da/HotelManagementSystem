@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,4 +27,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     // Tìm đơn đặt phòng đang hoạt động (CHECKED_IN) của một phòng để lấy thông tin nhanh
     Reservation findFirstByRoomIdAndStatus(Long roomId, String status);
+
+    // Tìm các đơn đặt phòng có thời gian lưu trú trùng với khoảng thời gian [startDate, endDate]
+    @Query("SELECT r FROM Reservation r WHERE r.checkInDate < :endDate AND r.checkOutDate > :startDate AND r.status <> 'CANCELLED'")
+    List<Reservation> findReservationsInPeriod(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

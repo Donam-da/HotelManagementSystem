@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/inventory")
@@ -26,12 +27,12 @@ public class InventoryController {
 
     @PostMapping
     public InventoryItem addItem(@RequestBody InventoryItem item) {
-        return inventoryRepository.save(item);
+        return inventoryRepository.save(Objects.requireNonNull(item));
     }
 
     @PutMapping("/{id}/stock")
     public InventoryItem updateStock(@PathVariable Long id, @RequestParam Integer quantityChange) {
-        InventoryItem item = inventoryRepository.findById(id)
+        InventoryItem item = inventoryRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Item not found"));
         item.setQuantity(item.getQuantity() + quantityChange);
         return inventoryRepository.save(item);
@@ -39,7 +40,7 @@ public class InventoryController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteItem(@PathVariable Long id) {
-        inventoryRepository.deleteById(id);
+        inventoryRepository.deleteById(Objects.requireNonNull(id));
         return ResponseEntity.noContent().build();
     }
 }
