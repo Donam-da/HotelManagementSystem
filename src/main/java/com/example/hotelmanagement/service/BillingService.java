@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class BillingService {
@@ -98,10 +99,10 @@ public class BillingService {
     // UC-008: Request Service (Gọi món/dịch vụ)
     @Transactional
     public ServiceRequest addServiceRequest(Long reservationId, Long serviceId, Integer quantity) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn đặt phòng với ID: " + reservationId));
         
-        HotelService service = hotelServiceRepository.findById(serviceId)
+        HotelService service = hotelServiceRepository.findById(Objects.requireNonNull(serviceId))
                 .orElseThrow(() -> new ResourceNotFoundException("Dịch vụ không tồn tại với ID: " + serviceId));
 
         ServiceRequest request = new ServiceRequest();
@@ -123,7 +124,7 @@ public class BillingService {
     // UC-010: Process Payment (Thanh toán)
     @Transactional
     public Payment processPayment(Long invoiceId, Payment paymentDetails) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository.findById(Objects.requireNonNull(invoiceId))
                 .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
 
         Payment payment = new Payment();
@@ -139,7 +140,7 @@ public class BillingService {
     // UC-010: Process Refund (Hoàn tiền)
     @Transactional
     public Payment processRefund(Long invoiceId, Double amount, String reason) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository.findById(Objects.requireNonNull(invoiceId))
                 .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
 
         Payment refund = new Payment();
@@ -155,7 +156,7 @@ public class BillingService {
     // BR-103: Đổi điểm thưởng lấy giảm giá (100 điểm = $1)
     @Transactional
     public Invoice redeemLoyaltyPoints(Long invoiceId, Integer pointsToRedeem) {
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository.findById(Objects.requireNonNull(invoiceId))
                 .orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại với ID: " + invoiceId));
         
         Reservation res = invoice.getReservation();

@@ -4,6 +4,7 @@ import com.example.hotelmanagement.entity.HotelService;
 import com.example.hotelmanagement.repository.HotelServiceRepository;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class HotelServiceService {
@@ -18,6 +19,6 @@ public class HotelServiceService {
     }
 
     public HotelService createService(HotelService service) {
-        return repository.save(service);
+        return repository.save(Objects.requireNonNull(service));
     }
 }

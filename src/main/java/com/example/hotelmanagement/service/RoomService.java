@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,7 +45,7 @@ public class RoomService {
 
     // UC-011: Manage Room Status (Cập nhật trạng thái thủ công)
     public Room updateRoomStatus(Long roomId, String status) {
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findById(Objects.requireNonNull(roomId))
                 .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
         
         // Các trạng thái hợp lệ: AVAILABLE, OCCUPIED, MAINTENANCE, DIRTY
@@ -58,15 +59,15 @@ public class RoomService {
 
     // Hỗ trợ phân trang cho Controller
     public Page<Room> getAllRooms(Pageable pageable) {
-        return roomRepository.findAll(pageable);
+        return roomRepository.findAll(Objects.requireNonNull(pageable));
     }
 
     public RoomType createRoomType(RoomType roomType) {
-        return roomTypeRepository.save(roomType);
+        return roomTypeRepository.save(Objects.requireNonNull(roomType));
     }
 
     public Room createRoom(Room room, Long roomTypeId) {
-        RoomType roomType = roomTypeRepository.findById(roomTypeId)
+        RoomType roomType = roomTypeRepository.findById(Objects.requireNonNull(roomTypeId))
                 .orElseThrow(() -> new ResourceNotFoundException("Loại phòng không tồn tại với ID: " + roomTypeId));
         room.setRoomType(roomType);
         return roomRepository.save(room);
@@ -79,11 +80,11 @@ public class RoomService {
 
     // --- QUẢN LÝ TIỆN NGHI (AMENITY) ---
     public List<Amenity> getAllAmenities() { return amenityRepository.findAll(); }
-    public Amenity createAmenity(Amenity amenity) { return amenityRepository.save(amenity); }
-    public void deleteAmenity(Long id) { amenityRepository.deleteById(id); }
+    public Amenity createAmenity(Amenity amenity) { return amenityRepository.save(Objects.requireNonNull(amenity)); }
+    public void deleteAmenity(Long id) { amenityRepository.deleteById(Objects.requireNonNull(id)); }
     
     public Amenity updateAmenity(Long id, Amenity details) {
-        Amenity amenity = amenityRepository.findById(id)
+        Amenity amenity = amenityRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Tiện nghi không tồn tại với ID: " + id));
         amenity.setName(details.getName());
         amenity.setDescription(details.getDescription());
@@ -92,9 +93,9 @@ public class RoomService {
     }
 
     public RoomType addAmenityToType(Long typeId, Long amenityId) {
-        RoomType type = roomTypeRepository.findById(typeId)
+        RoomType type = roomTypeRepository.findById(Objects.requireNonNull(typeId))
                 .orElseThrow(() -> new ResourceNotFoundException("Loại phòng không tồn tại với ID: " + typeId));
-        Amenity amenity = amenityRepository.findById(amenityId)
+        Amenity amenity = amenityRepository.findById(Objects.requireNonNull(amenityId))
                 .orElseThrow(() -> new ResourceNotFoundException("Tiện nghi không tồn tại với ID: " + amenityId));
 
         if (!type.getAmenities().contains(amenity)) {

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
+import java.util.Objects;
 import java.util.List;
 
 @Service
@@ -32,7 +33,7 @@ public class GuestService {
 
     @Transactional
     public Guest updateGuestProfile(Long id, Guest guestDetails) {
-        Guest guest = guestRepository.findById(id)
+        Guest guest = guestRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
         
         // BR-102: Check email uniqueness if changed
@@ -55,13 +56,13 @@ public class GuestService {
 
     // --- BỔ SUNG THEO YÊU CẦU 4.2.1 (Read & Delete) ---
     public Guest getGuestById(Long id) {
-        return guestRepository.findById(id)
+        return guestRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
     }
 
     @Transactional
     public void deleteGuest(Long id) {
-        Guest guest = guestRepository.findById(id)
+        Guest guest = guestRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + id));
         
         // THAY ĐỔI: Soft Delete (Yêu cầu 7.2)
@@ -78,10 +79,10 @@ public class GuestService {
     // --- BỔ SUNG CHO CONTROLLER (Layered Architecture) ---
     public Page<Guest> getAllGuests(Pageable pageable, boolean includeDeleted) {
         if (includeDeleted) {
-            return guestRepository.findAll(pageable);
+            return guestRepository.findAll(Objects.requireNonNull(pageable));
         }
         // Chỉ lấy những khách chưa bị xóa
-        return guestRepository.findByIsDeletedFalse(pageable);
+        return guestRepository.findByIsDeletedFalse(Objects.requireNonNull(pageable));
     }
 
     // --- MAPPING ENTITY TO DTO (Hỗ trợ mục 9.1.1) ---

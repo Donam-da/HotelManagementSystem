@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ReservationService {
@@ -56,7 +57,7 @@ public class ReservationService {
         }
 
         // B. Tìm Khách hàng & Phòng (Trả về 404 nếu không thấy)
-        Guest guest = guestRepository.findById(guestId)
+        Guest guest = guestRepository.findById(Objects.requireNonNull(guestId))
                 .orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại với ID: " + guestId));
         
         // BR-101: Guest must be at least 18 years old
@@ -67,7 +68,7 @@ public class ReservationService {
             }
         }
 
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findById(Objects.requireNonNull(roomId))
                 .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
 
         // C. Kiểm tra phòng có trống không?
@@ -94,7 +95,7 @@ public class ReservationService {
     // --- BỔ SUNG: XÁC NHẬN ĐẶT PHÒNG (Pending -> Confirmed) ---
     @Transactional
     public Reservation confirmReservation(Long reservationId) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
         res.setStatus("CONFIRMED");
         return reservationRepository.save(res);
@@ -103,7 +104,7 @@ public class ReservationService {
     // --- 2. HỦY ĐẶT PHÒNG (PATCH cancel) ---
     @Transactional
     public Reservation cancelReservation(Long reservationId) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
 
         if ("CANCELLED".equals(res.getStatus())) {
@@ -141,7 +142,7 @@ public class ReservationService {
     // --- 3. CHECK-IN (PATCH check-in) ---
     @Transactional
     public Reservation checkIn(Long reservationId) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
         
         // Kiểm tra logic trạng thái
@@ -162,7 +163,7 @@ public class ReservationService {
     // --- 4. CHECK-OUT (PATCH check-out) ---
     @Transactional
     public Reservation checkOut(Long reservationId) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
 
         if (!"CHECKED_IN".equals(res.getStatus())) {
@@ -197,7 +198,7 @@ public class ReservationService {
 
     // --- 5. LẤY HÓA ĐƠN (GET invoice) ---
     public Invoice getInvoiceByReservationId(Long reservationId) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + reservationId));
         
         // Luôn đảm bảo có hóa đơn
@@ -221,14 +222,14 @@ public class ReservationService {
 
     // --- 7b. LẤY TẤT CẢ CÓ PHÂN TRANG (Yêu cầu 5.2) ---
     public Page<Reservation> getAllReservations(Pageable pageable) {
-        return reservationRepository.findAll(pageable);
+        return reservationRepository.findAll(Objects.requireNonNull(pageable));
     }
 
     // --- 8. SỬA ĐỔI ĐẶT PHÒNG (Modification) ---
     // UC-004: Modify Reservation (Dates & Room)
     @Transactional
     public Reservation modifyReservation(Long reservationId, LocalDate newCheckIn, LocalDate newCheckOut, Long newRoomId, Long newGuestId) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
 
         // BR-004: Allow modification if PENDING or CONFIRMED
@@ -293,7 +294,7 @@ public class ReservationService {
     // UC-005 / 4.2.3: Manage reservation statuses (No-Show)
     @Transactional
     public Reservation markAsNoShow(Long reservationId) {
-        Reservation res = reservationRepository.findById(reservationId)
+        Reservation res = reservationRepository.findById(Objects.requireNonNull(reservationId))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn không tồn tại"));
 
         if (!"CONFIRMED".equals(res.getStatus())) {
@@ -313,7 +314,7 @@ public class ReservationService {
 
     // --- 10. LẤY CHI TIẾT (Hỗ trợ Controller tuân thủ Layered Architecture) ---
     public Reservation getReservationById(Long id) {
-        return reservationRepository.findById(id)
+        return reservationRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Đơn đặt phòng không tồn tại với ID: " + id));
     }
 

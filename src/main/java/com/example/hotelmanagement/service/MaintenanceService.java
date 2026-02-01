@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class MaintenanceService {
@@ -25,7 +26,7 @@ public class MaintenanceService {
 
     @Transactional
     public MaintenanceLog reportIssue(Long roomId, String description) {
-        Room room = roomRepository.findById(roomId)
+        Room room = roomRepository.findById(Objects.requireNonNull(roomId))
                 .orElseThrow(() -> new ResourceNotFoundException("Phòng không tồn tại với ID: " + roomId));
 
         // Cập nhật trạng thái phòng
@@ -43,7 +44,7 @@ public class MaintenanceService {
 
     @Transactional
     public MaintenanceLog completeMaintenance(Long logId, Double cost) {
-        MaintenanceLog log = maintenanceLogRepository.findById(logId)
+        MaintenanceLog log = maintenanceLogRepository.findById(Objects.requireNonNull(logId))
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu bảo trì với ID: " + logId));
 
         log.setResolvedDate(LocalDate.now());

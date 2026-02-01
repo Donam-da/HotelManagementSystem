@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.lang.NonNull;
 import java.util.List;
 
 @Repository
@@ -17,5 +18,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     // Hỗ trợ phân trang và tránh N+1 (Yêu cầu 5.2 & 5.3)
     @EntityGraph(attributePaths = {"guest", "room", "room.roomType"})
-    Page<Reservation> findAll(Pageable pageable);
+    @NonNull
+    Page<Reservation> findAll(@NonNull Pageable pageable);
 }
