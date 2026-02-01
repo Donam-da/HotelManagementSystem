@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.lang.NonNull;
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -20,4 +21,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @EntityGraph(attributePaths = {"guest", "room", "room.roomType"})
     @NonNull
     Page<Reservation> findAll(@NonNull Pageable pageable);
+
+    long countByCheckOutDateAndStatus(LocalDate checkOutDate, String status);
 }

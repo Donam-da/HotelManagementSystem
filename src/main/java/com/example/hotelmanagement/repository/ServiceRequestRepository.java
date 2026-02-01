@@ -8,4 +8,5 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
     
     // Tìm tất cả phiếu yêu cầu dịch vụ của một đơn đặt phòng cụ thể
     List<ServiceRequest> findByReservationId(Long reservationId);
+    long countByStatus(String status);
 }

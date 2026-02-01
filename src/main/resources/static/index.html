@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .sidebar { min-height: 100vh; background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%); color: white; }
@@ -96,6 +98,39 @@
                                     <h2 class="fw-bold" id="dash-guests">Loading...</h2>
                                 </div>
                                 <i class="fa-solid fa-user-plus fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Notifications Row -->
+                <div class="row g-4 mt-2">
+                    <!-- Room Status Chart -->
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h5 class="card-title mb-3">Trạng thái phòng</h5>
+                            <div style="height: 250px; position: relative;">
+                                <canvas id="roomStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Revenue Chart -->
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h5 class="card-title mb-3">Biểu đồ doanh thu (Tuần)</h5>
+                            <div style="height: 250px;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Notifications -->
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100">
+                            <h5 class="card-title mb-3">Thông báo nhanh</h5>
+                            <div class="list-group list-group-flush" id="dash-notifications">
+                                <div class="text-center text-muted mt-5"><i class="fa-solid fa-spinner fa-spin"></i> Đang tải...</div>
                             </div>
                         </div>
                     </div>
@@ -448,19 +483,84 @@
 
         async function loadDashboard() {
             try {
-                const [resOcc, resRev, resGuest] = await Promise.all([
+                const [resOcc, resRev, resGuest, resStatus, resNoti] = await Promise.all([
                     fetch(`${API_BASE}/reports/occupancy`),
                     fetch(`${API_BASE}/reports/revenue`),
-                    fetch(`${API_BASE}/reports/guest-stats`)
+                    fetch(`${API_BASE}/reports/guest-stats`),
+                    fetch(`${API_BASE}/reports/room-status`),
+                    fetch(`${API_BASE}/reports/notifications`)
                 ]);
 
                 const occ = await resOcc.json();
                 const rev = await resRev.json();
                 const guest = await resGuest.json();
+                const statusData = await resStatus.json();
+                const notiData = await resNoti.json();
 
                 document.getElementById('dash-occupied').innerText = occ.occupiedRooms || 0;
                 document.getElementById('dash-revenue').innerText = (rev.totalRevenue || 0).toLocaleString('vi-VN') + ' đ';
                 document.getElementById('dash-guests').innerText = guest.totalGuests || 0;
+
+                // 1. Render Room Status Chart (Pie)
+                const ctxStatus = document.getElementById('roomStatusChart').getContext('2d');
+                if(window.statusChart) window.statusChart.destroy(); // Destroy old chart if exists
+                window.statusChart = new Chart(ctxStatus, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Trống', 'Có khách', 'Bảo trì', 'Dọn dẹp'],
+                        datasets: [{
+                            data: [statusData.AVAILABLE, statusData.OCCUPIED, statusData.MAINTENANCE, statusData.DIRTY],
+                            backgroundColor: ['#2ecc71', '#3498db', '#e74c3c', '#f1c40f']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+
+                // 2. Render Revenue Chart (Line) - Mock Data for Demo
+                const ctxRev = document.getElementById('revenueChart').getContext('2d');
+                if(window.revChart) window.revChart.destroy();
+                window.revChart = new Chart(ctxRev, {
+                    type: 'line',
+                    data: {
+                        labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+                        datasets: [
+                            {
+                                label: 'Tuần này',
+                                data: rev.thisWeekData || [0,0,0,0,0,0,0], // Data from API
+                                borderColor: '#3498db',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Tuần trước',
+                                data: rev.lastWeekData || [0,0,0,0,0,0,0],
+                                borderColor: '#95a5a6',
+                                borderDash: [5, 5],
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+
+                // 3. Render Notifications
+                const notiList = document.getElementById('dash-notifications');
+                notiList.innerHTML = '';
+                if (notiData.length === 0) {
+                    notiList.innerHTML = '<div class="text-center text-muted mt-4">Không có thông báo mới</div>';
+                } else {
+                    notiData.forEach(n => {
+                        let icon = n.type === 'SERVICE' ? '<i class="fa-solid fa-bell text-warning me-2"></i>' : '<i class="fa-solid fa-clock text-danger me-2"></i>';
+                        notiList.innerHTML += `
+                            <div class="list-group-item list-group-item-action d-flex align-items-center">
+                                ${icon}
+                                <div>
+                                    <div class="fw-bold">${n.title}</div>
+                                    <small class="text-muted">${n.message}</small>
+                                </div>
+                            </div>`;
+                    });
+                }
+
             } catch (e) { console.error("Lỗi tải dashboard", e); }
         }
 

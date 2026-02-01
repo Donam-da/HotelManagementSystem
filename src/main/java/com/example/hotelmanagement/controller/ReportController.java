@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reports")
@@ -33,5 +34,17 @@ public class ReportController {
     @GetMapping("/guest-stats")
     public Map<String, Object> getGuestStatistics() {
         return reportService.getGuestStatistics();
+    }
+
+    // 4. Thống kê trạng thái phòng (Cho biểu đồ tròn)
+    @GetMapping("/room-status")
+    public Map<String, Long> getRoomStatusStats() {
+        return reportService.getRoomStatusStats();
+    }
+
+    // 5. Thông báo nhanh (Notifications)
+    @GetMapping("/notifications")
+    public List<Map<String, String>> getNotifications() {
+        return reportService.getDashboardNotifications();
     }
 }
